@@ -2,13 +2,12 @@
   Some test text.
   New line of text.
 
-  @nested_tag {
+  @nested_tag 
+  {
     
   }
 
   @"Tag With Spaces"(var = "Some value", another_var = 6.43, v = true) {
-    
-  }
-}
 
-t
+  } 
+}

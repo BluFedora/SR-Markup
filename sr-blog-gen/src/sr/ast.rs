@@ -16,9 +16,12 @@ use crate::Token::Text;
 use crate::TokenTag;
 use crate::TokenText;
 
+use std::collections::HashMap;
+
 pub struct Parser {
   lexer: Lexer,
   current_token: Token,
+  pub error_log: Vec<String>,
 }
 
 #[derive(Debug)]
@@ -30,6 +33,7 @@ pub struct AstNodeRoot {
 pub struct AstNodeTag {
   pub text: String,
   pub children: Vec<Box<dyn IAstNode>>,
+  pub attributes: HashMap<String, AstLiteral>,
 }
 
 #[derive(Debug)]
@@ -70,20 +74,23 @@ impl Parser {
     Parser {
       lexer: lex,
       current_token: Token::EndOfFile(),
+      error_log: Vec::new(),
     }
   }
 
-  pub fn parse(&mut self) -> Result<Box<dyn IAstNode>, String>
-  {
+  pub fn parse(&mut self) -> Option<Box<dyn IAstNode>> {
     let mut root_node = AstNodeRoot {
       children: Vec::new(),
     };
 
     self.advance_token();
-
     self.parse_impl(&mut root_node.children);
 
-    return Ok(Box::new(ASTNode::Root(root_node)));
+    return if self.error_log.is_empty() {
+      Some(Box::new(ASTNode::Root(root_node)))
+    } else {
+      None
+    };
   }
 
   pub fn parse_impl(&mut self, parent_child_list: &mut Vec<Box<dyn IAstNode>>) {
@@ -101,7 +108,6 @@ impl Parser {
         StringLiteral(ref str_lit) => {
           let child_node = Box::new(ASTNode::Literal(AstLiteral::Str(str_lit.clone())));
           self.advance_token();
-
 
           parent_child_list.push(child_node);
         }
@@ -138,6 +144,15 @@ impl Parser {
     }
   }
 
+  fn token_to_ast_literal(tok: Token) -> AstLiteral {
+    match tok {
+      StringLiteral(ref str_lit) => return AstLiteral::Str(str_lit.clone()),
+      NumberLiteral(number) => return AstLiteral::Float(number),
+      BoolLiteral(value) => return AstLiteral::Bool(value),
+      _ => panic!("The token was not a literal"),
+    }
+  }
+
   fn parse_tag_block(&mut self, tag: &TokenTag) -> Result<Box<dyn IAstNode>, String> {
     let mut tag_node = Box::new(AstNodeTag::new(tag.text.clone()));
 
@@ -162,6 +177,15 @@ impl Parser {
 
         if literal_value.is_literal() {
           self.advance_token();
+
+          let var_name_as_str = match variable_name {
+            Token::Text(value) => value.text,
+            _ => panic!("The variable must be a text node."),
+          };
+
+          tag_node
+            .attributes
+            .insert(var_name_as_str, Parser::token_to_ast_literal(literal_value));
         } else {
           self.error_panic(format!(
             "'{}' must be assigned a literal value.",
@@ -182,7 +206,7 @@ impl Parser {
     return Ok(tag_node);
   }
 
-  fn require(&mut self, token: &Token) -> bool {
+  fn current_token_is(&self, token: &Token) -> bool {
     let current_type = std::mem::discriminant(&self.current_token);
     let token_type = std::mem::discriminant(token);
 
@@ -190,33 +214,44 @@ impl Parser {
       if token_type != std::mem::discriminant(&Token::Character('_'))
         || self.current_token == *token
       {
-        self.advance_token();
         return true;
       }
+    }
+
+    return false;
+  }
+
+  fn require(&mut self, token: &Token) -> bool {
+    if self.current_token_is(token) {
+      self.advance_token();
+      return true;
     }
 
     self.error_panic(format!(
       "Expected {} but got {}",
       *token, self.current_token
     ));
-
-    return false;
+    // Prevent infinite loops by just returning true when at the end of a file.
+    return self.current_token == Token::EndOfFile();
   }
 
   fn expect(&mut self, token: &Token) -> bool {
-    let current_type = std::mem::discriminant(&self.current_token);
-    let token_type = std::mem::discriminant(token);
-
-    if current_type == token_type {
-      if token_type != std::mem::discriminant(&Token::Character('_'))
-        || self.current_token == *token
-      {
-        self.advance_token();
-        return true;
-      }
+    if self.current_token_is(token) {
+      self.advance_token();
+      return true;
     }
 
-    return false;
+    let is_at_end_of_file = self.current_token == Token::EndOfFile();
+
+    // Prevent infinite loops by just returning true when at the end of a file.
+    if is_at_end_of_file {
+      self.error_panic(format!(
+        "Unexpected eof of while searching for {}",
+        *token
+      ));
+    }
+
+    return is_at_end_of_file;
   }
 
   fn advance_token(&mut self) -> &Token {
@@ -225,7 +260,11 @@ impl Parser {
   }
 
   fn error_panic(&mut self, message: String) {
-    panic!(format!("Line({}): {}", self.lexer.line_no, message));
+    // Advance the token as not to get stuck in infinite loops.
+    self.advance_token();
+    self
+      .error_log
+      .push(format!("Line({}): {}", self.lexer.line_no, message));
   }
 }
 
@@ -234,6 +273,7 @@ impl AstNodeTag {
     Self {
       text: text,
       children: Vec::new(),
+      attributes: Default::default(),
     }
   }
 }
@@ -249,6 +289,14 @@ impl IAstNode for AstNodeRoot {
 impl IAstNode for AstNodeTag {
   fn visit(&self, parser: &mut Parser) {
     println!("Tag: {} {{", self.text);
+
+    if !self.attributes.is_empty() {
+      println!("Attributes: ");
+
+      for attrib in &self.attributes {
+        println!("  {} = {:?}", attrib.0, attrib.1);
+      }
+    }
 
     for child in &self.children {
       child.visit(parser);

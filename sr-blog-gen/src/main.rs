@@ -48,9 +48,13 @@ fn main() {
   let mut parser = Parser::new(lexer);
   let syntax_tree = parser.parse();
 
-  if syntax_tree.is_ok() {
+  if syntax_tree.is_some() {
     syntax_tree.unwrap().visit(&mut parser);
   } else {
-    println!("ERROR: {}", syntax_tree.unwrap_err());
+    println!("ERRORS:");
+
+    for err in &parser.error_log {
+      println!("{}", err);
+    }
   }
 }

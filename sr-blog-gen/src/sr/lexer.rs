@@ -3,11 +3,7 @@
 // File:   lexer.rs
 //
 
-pub struct Lexer {
-  source: String,
-  cursor: usize,
-  pub line_no: usize,
-}
+// Token
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct TokenTag {
@@ -35,7 +31,7 @@ pub enum Token {
 }
 
 impl Token {
-  pub fn is_literal(& self) -> bool {
+  pub fn is_literal(&self) -> bool {
     match self {
       Token::StringLiteral(_value) => return true,
       Token::NumberLiteral(_value) => return true,
@@ -47,8 +43,16 @@ impl Token {
 
 impl std::fmt::Display for Token {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-      write!(f, "{:?}", self)
+    write!(f, "{:?}", self)
   }
+}
+
+// Lexer
+
+pub struct Lexer {
+  source: String,
+  cursor: usize,
+  pub line_no: usize,
 }
 
 impl Lexer {
@@ -76,7 +80,7 @@ impl Lexer {
         _ => {
           let src_len_left = self.source.len() - self.cursor;
 
-          if c.is_special_character() {
+          if c.is_special_character() || c == ',' {
             self.advance_cursor();
             return Token::Character(c);
           } else if src_len_left >= 4 && self.source[self.cursor..(self.cursor + 4)] == *"true" {
@@ -166,7 +170,7 @@ impl Lexer {
       {
         self.advance_cursor();
 
-        if !self.is_not_at_end() {
+        if self.is_at_end() {
           return Token::Error("Unterminated Tag name string".to_string());
         }
         name_length += 1;
@@ -183,7 +187,10 @@ impl Lexer {
     let line_no_start = self.line_no;
     let mut line_no_with_content = line_no_start;
 
-    while self.is_not_at_end() && !self.current_char().is_special_character() {
+    while self.is_not_at_end()
+      && !self.current_char().is_special_character()
+      && self.current_char() != '\"'
+    {
       if self.is_at_end() {
         return Token::Error("Unterminated Text Block".to_string());
       }
@@ -232,7 +239,7 @@ impl Lexer {
   }
 
   fn skip_whitespace(&mut self) {
-    while self.current_char().is_ascii_whitespace() && self.is_not_at_end() {
+    while self.is_not_at_end() && self.current_char().is_ascii_whitespace() {
       self.advance_cursor();
     }
   }
@@ -270,6 +277,8 @@ impl Lexer {
     return self.cursor < self.source.len();
   }
 }
+
+// Character Helpers
 
 trait CharExt {
   fn is_special_character(&self) -> bool;
