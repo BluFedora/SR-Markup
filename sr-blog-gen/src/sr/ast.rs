@@ -18,25 +18,18 @@ use crate::TokenText;
 
 use std::collections::HashMap;
 
-pub struct Parser {
-  lexer: Lexer,
-  current_token: Token,
-  pub error_log: Vec<String>,
-}
+// Ast Nodes
 
-#[derive(Debug)]
 pub struct AstNodeRoot {
   pub children: Vec<Box<dyn IAstNode>>,
 }
 
-#[derive(Debug)]
 pub struct AstNodeTag {
   pub text: String,
   pub children: Vec<Box<dyn IAstNode>>,
   pub attributes: HashMap<String, AstLiteral>,
 }
 
-#[derive(Debug)]
 pub struct AstNodeText {
   pub text: String,
 }
@@ -52,7 +45,6 @@ pub trait IAstNode {
   fn visit(&self, parser: &mut Parser);
 }
 
-#[derive(Debug)]
 pub enum ASTNode {
   Root(AstNodeRoot),
   Tag(AstNodeTag),
@@ -67,6 +59,15 @@ fn make_empty_token_text() -> Token {
     line_no_end: 0,
     text: "".to_string(),
   });
+}
+
+
+// Parser
+
+pub struct Parser {
+  lexer: Lexer,
+  current_token: Token,
+  pub error_log: Vec<String>,
 }
 
 impl Parser {
@@ -268,6 +269,8 @@ impl Parser {
   }
 }
 
+// Node Impl
+
 impl AstNodeTag {
   pub fn new(text: String) -> Self {
     Self {
@@ -326,11 +329,5 @@ impl IAstNode for ASTNode {
       ASTNode::Text(t) => t.visit(parser),
       ASTNode::Literal(l) => l.visit(parser),
     }
-  }
-}
-
-impl std::fmt::Debug for dyn IAstNode {
-  fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
-    todo!()
   }
 }
