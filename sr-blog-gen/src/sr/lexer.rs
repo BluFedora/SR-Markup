@@ -9,7 +9,12 @@ pub struct Lexer {
   pub line_no: usize,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
+pub struct TokenTag {
+  pub text: String,
+}
+
+#[derive(PartialEq, Debug, Clone)]
 pub struct TokenText {
   pub line_no_start: usize,
   pub line_no_end_with_content: usize,
@@ -17,27 +22,37 @@ pub struct TokenText {
   pub text: String,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum Token {
-  Tag(String),
+  Tag(TokenTag),
+  StringLiteral(String),
+  NumberLiteral(f64),
+  BoolLiteral(bool),
   Text(TokenText),
   Character(char),
   Error(String),
-  EndOfFile,
+  EndOfFile(),
 }
 
-trait CharExt {
-  fn is_special_character(&self) -> bool;
+impl Token {
+  pub fn is_literal(& self) -> bool {
+    match self {
+      Token::StringLiteral(_value) => return true,
+      Token::NumberLiteral(_value) => return true,
+      Token::BoolLiteral(_value) => return true,
+      _ => return false,
+    }
+  }
 }
 
-impl CharExt for char {
-  fn is_special_character(&self) -> bool {
-    return *self == '@' || *self == '{' || *self == '}' || *self == '(' || *self == ')';
+impl std::fmt::Display for Token {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+      write!(f, "{:?}", self)
   }
 }
 
 impl Lexer {
-  pub fn new(src: String) -> Lexer {
+  pub fn new(src: String) -> Self {
     Lexer {
       source: src,
       cursor: 0,
@@ -56,10 +71,28 @@ impl Lexer {
 
       match c {
         '@' => return self.parse_tag_name(),
+        '\"' => return self.parse_quoted_string(false),
+        '0'..='9' => return self.parse_numeric_literal(),
         _ => {
+          let src_len_left = self.source.len() - self.cursor;
+
           if c.is_special_character() {
             self.advance_cursor();
             return Token::Character(c);
+          } else if src_len_left >= 4 && self.source[self.cursor..(self.cursor + 4)] == *"true" {
+            self.advance_cursor(); // 't'
+            self.advance_cursor(); // 'r'
+            self.advance_cursor(); // 'u'
+            self.advance_cursor(); // 'e'
+
+            return Token::BoolLiteral(true);
+          } else if src_len_left >= 5 && self.source[self.cursor..(self.cursor + 4)] == *"false" {
+            self.advance_cursor(); // 'f'
+            self.advance_cursor(); // 'a'
+            self.advance_cursor(); // 'l'
+            self.advance_cursor(); // 's'
+            self.advance_cursor(); // 'e'
+            return Token::BoolLiteral(false);
           } else {
             return self.parse_text_block();
           }
@@ -67,7 +100,54 @@ impl Lexer {
       }
     }
 
-    return Token::EndOfFile;
+    return Token::EndOfFile();
+  }
+
+  fn parse_numeric_literal(&mut self) -> Token {
+    let number_start = self.cursor;
+
+    while self.current_char().is_ascii_digit() || self.current_char() == '.' {
+      self.advance_cursor();
+
+      if self.is_at_end() {
+        break;
+      }
+    }
+
+    let number_end = self.cursor;
+    let number = self.source[number_start..number_end].parse::<f64>();
+
+    match number {
+      Ok(value) => return Token::NumberLiteral(value),
+      Err(e) => return Token::Error(e.to_string()),
+    }
+  }
+
+  fn parse_quoted_string(&mut self, as_tag: bool) -> Token {
+    self.advance_cursor(); // Skip over '"'
+
+    let name_start = self.cursor;
+    let mut name_length = 0;
+
+    while self.current_char() != '\"' {
+      self.advance_cursor();
+
+      if self.is_at_end() {
+        return Token::Error("Unterminated Tag name string".to_string());
+      }
+
+      name_length += 1;
+    }
+
+    self.advance_cursor(); // Skip over '"'
+
+    if as_tag {
+      return Token::Tag(TokenTag {
+        text: self.source[name_start..(name_start + name_length)].to_string(),
+      });
+    }
+
+    return Token::StringLiteral(self.source[name_start..(name_start + name_length)].to_string());
   }
 
   fn parse_tag_name(&mut self) -> Token {
@@ -75,23 +155,7 @@ impl Lexer {
 
     // Tag names can be represented by quotes to have spaces in them.
     if self.current_char() == '\"' {
-      self.advance_cursor(); // Skip over '"'
-
-      let name_start = self.cursor;
-      let mut name_length = 0;
-
-      while self.current_char() != '\"' {
-        self.advance_cursor();
-
-        if !self.is_not_at_end() {
-          return Token::Error("Unterminated Tag name string".to_string());
-        }
-        name_length += 1;
-      }
-
-      self.advance_cursor(); // Skip over '"'
-
-      return Token::Tag(self.source[name_start..(name_start + name_length)].to_string());
+      return self.parse_quoted_string(true);
     } else {
       let name_start = self.cursor;
       let mut name_length = 0;
@@ -108,7 +172,9 @@ impl Lexer {
         name_length += 1;
       }
 
-      return Token::Tag(self.source[name_start..(name_start + name_length)].to_string());
+      return Token::Tag(TokenTag {
+        text: self.source[name_start..(name_start + name_length)].to_string(),
+      });
     }
   }
 
@@ -117,8 +183,8 @@ impl Lexer {
     let line_no_start = self.line_no;
     let mut line_no_with_content = line_no_start;
 
-    while !self.current_char().is_special_character() {
-      if !self.is_not_at_end() {
+    while self.is_not_at_end() && !self.current_char().is_special_character() {
+      if self.is_at_end() {
         return Token::Error("Unterminated Text Block".to_string());
       }
 
@@ -129,7 +195,8 @@ impl Lexer {
         let escaped_character = self.current_char();
         self.advance_cursor();
 
-        // NOTE(SR): Anything commented out works in C but not Rust but left in for completeness.
+        // NOTE(SR):
+        //   Anything commented out works in C but not Rust but left in for completeness.
 
         let cc = match escaped_character {
           // 'a' => '\a',
@@ -160,7 +227,7 @@ impl Lexer {
       line_no_start: line_no_start,
       line_no_end_with_content: line_no_with_content,
       line_no_end: self.line_no,
-      text: text_block,
+      text: text_block.trim_end().to_string(),
     });
   }
 
@@ -195,7 +262,26 @@ impl Lexer {
     return self.source.chars().nth(index).unwrap();
   }
 
+  fn is_at_end(&self) -> bool {
+    return !self.is_not_at_end();
+  }
+
   fn is_not_at_end(&self) -> bool {
     return self.cursor < self.source.len();
+  }
+}
+
+trait CharExt {
+  fn is_special_character(&self) -> bool;
+}
+
+impl CharExt for char {
+  fn is_special_character(&self) -> bool {
+    return *self == '@'
+      || *self == '{'
+      || *self == '}'
+      || *self == '('
+      || *self == ')'
+      || *self == '=';
   }
 }
