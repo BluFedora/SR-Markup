@@ -10,13 +10,17 @@
 
 pub mod sr;
 
+use crate::sr::ast_processor::IAstProcessor;
 use sr::ast::*;
 use sr::lexer::*;
 
+fn test_block_bytes() -> std::borrow::Cow<'static, str> {
+  String::from_utf8_lossy(include_bytes!("../test-blog.blog"))
+}
+
 #[test]
 fn test_lexer() {
-  let test_blog_file_bytes = include_bytes!("../test-blog.blog");
-  let test_blog_file_string = String::from_utf8_lossy(test_blog_file_bytes);
+  let test_blog_file_string = test_block_bytes();
   let mut lexer = Lexer::new(test_blog_file_string.to_string());
 
   loop {
@@ -26,6 +30,81 @@ fn test_lexer() {
     if token == Token::EndOfFile() {
       break;
     }
+  }
+}
+
+struct BlogProcessor {
+  current_indent: u32,
+}
+
+impl BlogProcessor {
+  fn indent(&mut self) {
+    self.current_indent += 1;
+  }
+
+  fn print_indent(&self) {
+    for _i in 0..self.current_indent {
+      print!("  ");
+    }
+  }
+
+  fn unindent(&mut self) {
+    self.current_indent -= 1;
+  }
+}
+
+impl IAstProcessor for BlogProcessor {
+  fn has_error(&mut self) -> bool {
+    false
+  }
+
+  fn visit_begin_root(&mut self, _: &sr::ast::AstNodeRoot) {
+    println!("ROOT DOC BEGIN:");
+    self.indent();
+  }
+
+  fn visit_begin_tag(&mut self, tag_node: &sr::ast::AstNodeTag) {
+    self.print_indent();
+    println!("Tag({}) {{", tag_node.text);
+    self.indent();
+
+    if !tag_node.attributes.is_empty() {
+      self.indent();
+
+      self.print_indent();
+      println!("Attributes: ");
+
+      self.indent();
+      for attrib in &tag_node.attributes {
+        self.print_indent();
+        println!("{} = {:?}", attrib.0, attrib.1);
+      }
+      self.unindent();
+
+      self.unindent();
+    }
+  }
+
+  fn visit_text(&mut self, text_node: &sr::ast::AstNodeText) {
+    self.print_indent();
+    println!("TEXT({})", text_node.text);
+  }
+
+  fn visit_literal(&mut self, literal_node: &sr::ast::AstNodeLiteral) {
+    self.print_indent();
+    println!("LITERAL({:?})", literal_node);
+  }
+
+  fn visit_end_tag(&mut self, _: &sr::ast::AstNodeTag) {
+    self.unindent();
+    self.print_indent();
+    println!("}}");
+  }
+
+  fn visit_end_root(&mut self, _: &sr::ast::AstNodeRoot) {
+    self.unindent();
+    self.print_indent();
+    println!("ROOT DOC END:");
   }
 }
 
@@ -42,19 +121,20 @@ fn main() {
 
   println!("\n----------------------------------\n");
 
-  let test_blog_file_bytes = include_bytes!("../test-blog.blog");
-  let test_blog_file_string = String::from_utf8_lossy(test_blog_file_bytes);
+  let test_blog_file_string = test_block_bytes();
   let lexer = Lexer::new(test_blog_file_string.to_string());
   let mut parser = Parser::new(lexer);
   let syntax_tree = parser.parse();
+  let mut process_blog = BlogProcessor { current_indent: 0 };
 
-  if syntax_tree.is_some() {
-    syntax_tree.unwrap().visit(&mut parser);
-  } else {
-    println!("ERRORS:");
+  match syntax_tree {
+    Some(raw_tree) => raw_tree.visit(&mut process_blog),
+    None => {
+      println!("ERRORS:");
 
-    for err in &parser.error_log {
-      println!("{}", err);
+      for err in &parser.error_log {
+        println!("{}", err);
+      }
     }
   }
 }

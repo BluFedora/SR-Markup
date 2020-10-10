@@ -3,16 +3,12 @@
 // File:   ast.rs
 //
 
+use crate::sr::ast_processor::IAstProcessor;
 use crate::Lexer;
 use crate::Token;
-use crate::Token::BoolLiteral;
-use crate::Token::Character;
-use crate::Token::EndOfFile;
-use crate::Token::Error;
-use crate::Token::NumberLiteral;
-use crate::Token::StringLiteral;
-use crate::Token::Tag;
-use crate::Token::Text;
+use crate::Token::{
+  BoolLiteral, Character, EndOfFile, Error, NumberLiteral, StringLiteral, Tag, Text,
+};
 use crate::TokenTag;
 use crate::TokenText;
 
@@ -20,14 +16,17 @@ use std::collections::HashMap;
 
 // Ast Nodes
 
+type ASTNodePtr = Box<ASTNode>;
+type ASTNodeList = Vec<ASTNodePtr>;
+
 pub struct AstNodeRoot {
-  pub children: Vec<Box<dyn IAstNode>>,
+  pub children: ASTNodeList,
 }
 
 pub struct AstNodeTag {
   pub text: String,
-  pub children: Vec<Box<dyn IAstNode>>,
-  pub attributes: HashMap<String, AstLiteral>,
+  pub children: ASTNodeList,
+  pub attributes: HashMap<String, AstNodeLiteral>,
 }
 
 pub struct AstNodeText {
@@ -35,21 +34,50 @@ pub struct AstNodeText {
 }
 
 #[derive(Debug)]
-pub enum AstLiteral {
+pub enum AstNodeLiteral {
   Str(String),
   Float(f64),
   Bool(bool),
-}
-
-pub trait IAstNode {
-  fn visit(&self, parser: &mut Parser);
 }
 
 pub enum ASTNode {
   Root(AstNodeRoot),
   Tag(AstNodeTag),
   Text(AstNodeText),
-  Literal(AstLiteral),
+  Literal(AstNodeLiteral),
+}
+
+impl ASTNode {
+  pub fn visit(&self, processor: &mut dyn IAstProcessor) {
+    match self {
+      ASTNode::Root(r) => {
+        processor.visit_begin_root(r);
+
+        for child in &r.children {
+          child.visit(processor);
+
+          if processor.has_error() {
+            break;
+          }
+        }
+
+        processor.visit_end_root(r);
+      }
+      ASTNode::Tag(t) => {
+        processor.visit_begin_tag(t);
+
+        for child in &t.children {
+          child.visit(processor);
+          if processor.has_error() {
+            break;
+          }
+        }
+        processor.visit_end_tag(t);
+      }
+      ASTNode::Text(t) => processor.visit_text(t),
+      ASTNode::Literal(l) => processor.visit_literal(l),
+    }
+  }
 }
 
 fn make_empty_token_text() -> Token {
@@ -60,7 +88,6 @@ fn make_empty_token_text() -> Token {
     text: "".to_string(),
   });
 }
-
 
 // Parser
 
@@ -79,7 +106,7 @@ impl Parser {
     }
   }
 
-  pub fn parse(&mut self) -> Option<Box<dyn IAstNode>> {
+  pub fn parse(&mut self) -> Option<ASTNodePtr> {
     let mut root_node = AstNodeRoot {
       children: Vec::new(),
     };
@@ -94,7 +121,7 @@ impl Parser {
     };
   }
 
-  pub fn parse_impl(&mut self, parent_child_list: &mut Vec<Box<dyn IAstNode>>) {
+  fn parse_impl(&mut self, parent_child_list: &mut ASTNodeList) {
     loop {
       let current_token = self.current_token.clone();
 
@@ -102,24 +129,24 @@ impl Parser {
         Tag(ref tt) => {
           let tt_node = self.parse_tag_block(&tt);
 
-          if tt_node.is_ok() {
+          if tt_node.is_some() {
             parent_child_list.push(tt_node.unwrap());
           }
         }
         StringLiteral(ref str_lit) => {
-          let child_node = Box::new(ASTNode::Literal(AstLiteral::Str(str_lit.clone())));
+          let child_node = Box::new(ASTNode::Literal(AstNodeLiteral::Str(str_lit.clone())));
           self.advance_token();
 
           parent_child_list.push(child_node);
         }
         NumberLiteral(number) => {
-          let child_node = Box::new(ASTNode::Literal(AstLiteral::Float(number)));
+          let child_node = Box::new(ASTNode::Literal(AstNodeLiteral::Float(number)));
           self.advance_token();
 
           parent_child_list.push(child_node);
         }
         BoolLiteral(value) => {
-          let child_node = Box::new(ASTNode::Literal(AstLiteral::Bool(value)));
+          let child_node = Box::new(ASTNode::Literal(AstNodeLiteral::Bool(value)));
           self.advance_token();
 
           parent_child_list.push(child_node);
@@ -145,17 +172,17 @@ impl Parser {
     }
   }
 
-  fn token_to_ast_literal(tok: Token) -> AstLiteral {
+  fn token_to_ast_literal(tok: Token) -> AstNodeLiteral {
     match tok {
-      StringLiteral(ref str_lit) => return AstLiteral::Str(str_lit.clone()),
-      NumberLiteral(number) => return AstLiteral::Float(number),
-      BoolLiteral(value) => return AstLiteral::Bool(value),
+      StringLiteral(ref str_lit) => return AstNodeLiteral::Str(str_lit.clone()),
+      NumberLiteral(number) => return AstNodeLiteral::Float(number),
+      BoolLiteral(value) => return AstNodeLiteral::Bool(value),
       _ => panic!("The token was not a literal"),
     }
   }
 
-  fn parse_tag_block(&mut self, tag: &TokenTag) -> Result<Box<dyn IAstNode>, String> {
-    let mut tag_node = Box::new(AstNodeTag::new(tag.text.clone()));
+  fn parse_tag_block(&mut self, tag: &TokenTag) -> Option<ASTNodePtr> {
+    let mut tag_node = AstNodeTag::new(tag.text.clone());
 
     self.advance_token();
 
@@ -204,7 +231,7 @@ impl Parser {
       }
     }
 
-    return Ok(tag_node);
+    return Some(Box::new(ASTNode::Tag(tag_node)));
   }
 
   fn current_token_is(&self, token: &Token) -> bool {
@@ -246,10 +273,7 @@ impl Parser {
 
     // Prevent infinite loops by just returning true when at the end of a file.
     if is_at_end_of_file {
-      self.error_panic(format!(
-        "Unexpected eof of while searching for {}",
-        *token
-      ));
+      self.error_panic(format!("Unexpected eof of while searching for {}", *token));
     }
 
     return is_at_end_of_file;
@@ -269,65 +293,12 @@ impl Parser {
   }
 }
 
-// Node Impl
-
 impl AstNodeTag {
   pub fn new(text: String) -> Self {
     Self {
       text: text,
       children: Vec::new(),
       attributes: Default::default(),
-    }
-  }
-}
-
-impl IAstNode for AstNodeRoot {
-  fn visit(&self, parser: &mut Parser) {
-    for child in &self.children {
-      child.visit(parser);
-    }
-  }
-}
-
-impl IAstNode for AstNodeTag {
-  fn visit(&self, parser: &mut Parser) {
-    println!("Tag: {} {{", self.text);
-
-    if !self.attributes.is_empty() {
-      println!("Attributes: ");
-
-      for attrib in &self.attributes {
-        println!("  {} = {:?}", attrib.0, attrib.1);
-      }
-    }
-
-    for child in &self.children {
-      child.visit(parser);
-    }
-
-    println!("}}");
-  }
-}
-
-impl IAstNode for AstNodeText {
-  fn visit(&self, _parser: &mut Parser) {
-    println!("TEXT: {}", self.text);
-  }
-}
-
-impl IAstNode for AstLiteral {
-  fn visit(&self, _parser: &mut Parser) {
-    println!("Literal: {:?}", self);
-  }
-}
-
-impl IAstNode for ASTNode {
-  fn visit(&self, parser: &mut Parser) {
-    match self {
-      ASTNode::Root(r) => r.visit(parser),
-      ASTNode::Tag(t) => t.visit(parser),
-      ASTNode::Text(t) => t.visit(parser),
-      ASTNode::Literal(l) => l.visit(parser),
     }
   }
 }

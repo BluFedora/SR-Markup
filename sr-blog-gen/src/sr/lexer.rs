@@ -75,7 +75,12 @@ impl Lexer {
 
       match c {
         '@' => return self.parse_tag_name(),
-        '\"' => return self.parse_quoted_string(false),
+        '\"' => {
+          return match self.parse_quoted_string() {
+            Ok(quoted_string) => Token::StringLiteral(quoted_string),
+            Err(err_token) => err_token,
+          }
+        }
         '0'..='9' => return self.parse_numeric_literal(),
         _ => {
           let src_len_left = self.source.len() - self.cursor;
@@ -127,7 +132,7 @@ impl Lexer {
     }
   }
 
-  fn parse_quoted_string(&mut self, as_tag: bool) -> Token {
+  fn parse_quoted_string(&mut self) -> Result<String, Token> {
     self.advance_cursor(); // Skip over '"'
 
     let name_start = self.cursor;
@@ -137,7 +142,7 @@ impl Lexer {
       self.advance_cursor();
 
       if self.is_at_end() {
-        return Token::Error("Unterminated Tag name string".to_string());
+        return Err(Token::Error("Unterminated Tag name string".to_string()));
       }
 
       name_length += 1;
@@ -145,13 +150,7 @@ impl Lexer {
 
     self.advance_cursor(); // Skip over '"'
 
-    if as_tag {
-      return Token::Tag(TokenTag {
-        text: self.source[name_start..(name_start + name_length)].to_string(),
-      });
-    }
-
-    return Token::StringLiteral(self.source[name_start..(name_start + name_length)].to_string());
+    return Ok(self.source[name_start..(name_start + name_length)].to_string());
   }
 
   fn parse_tag_name(&mut self) -> Token {
@@ -159,7 +158,10 @@ impl Lexer {
 
     // Tag names can be represented by quotes to have spaces in them.
     if self.current_char() == '\"' {
-      return self.parse_quoted_string(true);
+      return match self.parse_quoted_string() {
+        Ok(token_str) => Token::Tag(TokenTag { text: token_str }),
+        Err(err_token) => err_token,
+      };
     } else {
       let name_start = self.cursor;
       let mut name_length = 0;

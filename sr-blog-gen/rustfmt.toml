@@ -1,1 +1,3 @@
-brace_style = "AlwaysNextLine"
+
+brace_style     = "AlwaysNextLine"
+binop_separator = "Back"
