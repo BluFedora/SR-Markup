@@ -14,14 +14,13 @@ use crate::sr::ast_processor::IAstProcessor;
 use sr::ast::*;
 use sr::lexer::*;
 
-fn test_block_bytes() -> std::borrow::Cow<'static, str> {
-  String::from_utf8_lossy(include_bytes!("../test-blog.blog"))
+fn test_blog_string() -> String {
+  String::from_utf8_lossy(include_bytes!("../test-blog.blog")).to_string()
 }
 
 #[test]
 fn test_lexer() {
-  let test_blog_file_string = test_block_bytes();
-  let mut lexer = Lexer::new(test_blog_file_string.to_string());
+  let mut lexer = Lexer::new(test_blog_string());
 
   loop {
     let token = lexer.get_next_token();
@@ -29,6 +28,36 @@ fn test_lexer() {
     println!("Line({}) Token::{:?}", lexer.line_no, token);
     if token == Token::EndOfFile() {
       break;
+    }
+  }
+}
+
+fn main() {
+  let args = std::env::args();
+
+  println!("----------------------------------");
+  println!("----- SR Blog Post Generator -----");
+  println!("----------------------------------\n");
+
+  for arg in args.enumerate() {
+    println!("Arg({}) = {}", arg.0, arg.1);
+  }
+
+  println!("\n----------------------------------\n");
+
+  let lexer = Lexer::new(test_blog_string());
+  let mut parser = Parser::new(lexer);
+  let syntax_tree = parser.parse();
+  let mut process_blog = BlogProcessor { current_indent: 0 };
+
+  match syntax_tree {
+    Some(raw_tree) => raw_tree.visit(&mut process_blog),
+    None => {
+      eprintln!("ERRORS:");
+
+      for err in &parser.error_log {
+        eprintln!("{}", err);
+      }
     }
   }
 }
@@ -77,7 +106,7 @@ impl IAstProcessor for BlogProcessor {
       self.indent();
       for attrib in &tag_node.attributes {
         self.print_indent();
-        println!("{} = {:?}", attrib.0, attrib.1);
+        println!("'{}' = {:?}", attrib.0, attrib.1);
       }
       self.unindent();
 
@@ -105,36 +134,5 @@ impl IAstProcessor for BlogProcessor {
     self.unindent();
     self.print_indent();
     println!("ROOT DOC END:");
-  }
-}
-
-fn main() {
-  let args = std::env::args();
-
-  println!("----------------------------------");
-  println!("----- SR Blog Post Generator -----");
-  println!("----------------------------------\n");
-
-  for arg in args.enumerate() {
-    println!("Arg({}) = {}", arg.0, arg.1);
-  }
-
-  println!("\n----------------------------------\n");
-
-  let test_blog_file_string = test_block_bytes();
-  let lexer = Lexer::new(test_blog_file_string.to_string());
-  let mut parser = Parser::new(lexer);
-  let syntax_tree = parser.parse();
-  let mut process_blog = BlogProcessor { current_indent: 0 };
-
-  match syntax_tree {
-    Some(raw_tree) => raw_tree.visit(&mut process_blog),
-    None => {
-      println!("ERRORS:");
-
-      for err in &parser.error_log {
-        println!("{}", err);
-      }
-    }
   }
 }

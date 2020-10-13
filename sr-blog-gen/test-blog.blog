@@ -8,7 +8,7 @@
   }
 
   @"Tag With Spaces"(var = "Some value", another_var = 6.43, v = true) {
-
+    Some more test text in a nested tag.
   }
 }
 

@@ -259,6 +259,7 @@ impl Parser {
       "Expected {} but got {}",
       *token, self.current_token
     ));
+
     // Prevent infinite loops by just returning true when at the end of a file.
     return self.current_token == Token::EndOfFile();
   }
@@ -271,11 +272,10 @@ impl Parser {
 
     let is_at_end_of_file = self.current_token == Token::EndOfFile();
 
-    // Prevent infinite loops by just returning true when at the end of a file.
     if is_at_end_of_file {
       self.error_panic(format!("Unexpected eof of while searching for {}", *token));
     }
-
+    // Prevent infinite loops by just returning true when at the end of a file.
     return is_at_end_of_file;
   }
 
@@ -297,7 +297,7 @@ impl AstNodeTag {
   pub fn new(text: String) -> Self {
     Self {
       text: text,
-      children: Vec::new(),
+      children: Default::default(),
       attributes: Default::default(),
     }
   }
