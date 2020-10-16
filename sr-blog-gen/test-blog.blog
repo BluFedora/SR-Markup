@@ -1,3 +1,5 @@
+@Header(title = "Some Title Text")
+
 @p {
   Some test text.
   New line of text.
@@ -11,6 +13,9 @@
     Some more test text in a nested tag.
   }
 }
+
+@TagWithNoBody()
+@TagWithNoBody
 
 8.0
 

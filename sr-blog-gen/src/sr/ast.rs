@@ -190,16 +190,14 @@ impl Parser {
       while !self.expect(&Token::Character(')')) {
         let variable_name = self.current_token.clone();
 
-        if !self.expect(&make_empty_token_text()) {
-          self.error_panic(format!(
-            "Variable must be a string name but got {}",
-            variable_name
-          ));
-        }
-
-        if !self.expect(&Token::Character('=')) {
-          self.error_panic(format!("Expected assignment after '{}'.", variable_name));
-        }
+        self.require(
+          &make_empty_token_text(),
+          &format!("Variable must be a string name but got {}", variable_name),
+        );
+        self.require(
+          &Token::Character('='),
+          &format!("'{}' must be assigned to", variable_name),
+        );
 
         let literal_value = self.current_token.clone();
 
@@ -208,7 +206,7 @@ impl Parser {
 
           let var_name_as_str = match variable_name {
             Token::Text(value) => value.text,
-            _ => panic!("The variable must be a text node."),
+            _ => panic!("The variable must be a text node"),
           };
 
           tag_node
@@ -216,7 +214,7 @@ impl Parser {
             .insert(var_name_as_str, Parser::token_to_ast_literal(literal_value));
         } else {
           self.error_panic(format!(
-            "'{}' must be assigned a literal value.",
+            "'{}' must be assigned a literal value",
             variable_name
           ));
         }
@@ -225,7 +223,9 @@ impl Parser {
       }
     }
 
-    if self.require(&Token::Character('{')) {
+    // Tag Body is optional
+    // if self.require(&Token::Character('{')) {
+    if self.expect(&Token::Character('{')) {
       while !self.expect(&Token::Character('}')) {
         self.parse_impl(&mut tag_node.children);
       }
@@ -249,15 +249,15 @@ impl Parser {
     return false;
   }
 
-  fn require(&mut self, token: &Token) -> bool {
+  fn require(&mut self, token: &Token, err_message: &String) -> bool {
     if self.current_token_is(token) {
       self.advance_token();
       return true;
     }
 
     self.error_panic(format!(
-      "Expected {} but got {}",
-      *token, self.current_token
+      "Expected {} but got {}, {}",
+      *token, self.current_token, err_message
     ));
 
     // Prevent infinite loops by just returning true when at the end of a file.
@@ -289,7 +289,7 @@ impl Parser {
     self.advance_token();
     self
       .error_log
-      .push(format!("Line({}): {}", self.lexer.line_no, message));
+      .push(format!("Line({}): {}.", self.lexer.line_no, message));
   }
 }
 

@@ -32,6 +32,21 @@ fn test_lexer() {
   }
 }
 
+/* // [https://doc.rust-lang.org/nomicon/ffi.html]
+
+extern crate libc;
+
+use libc::{c_int};
+
+#[link(name = "bf.PlatformDLL")]
+extern {
+
+  fn bfPlatformInit() -> c_int;
+}
+
+libc = "0.2.0"
+*/
+
 fn main() {
   let args = std::env::args();
 
