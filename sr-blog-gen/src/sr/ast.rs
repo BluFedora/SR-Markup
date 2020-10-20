@@ -3,7 +3,7 @@
 // File:   ast.rs
 //
 
-use crate::sr::ast_processor::IAstProcessor;
+use crate::sr::ast_processor::IASTProcessor;
 use crate::Lexer;
 use crate::Token;
 use crate::Token::{
@@ -11,44 +11,43 @@ use crate::Token::{
 };
 use crate::TokenTag;
 use crate::TokenText;
-
 use std::collections::HashMap;
 
-// Ast Nodes
+// AST Nodes
 
-type ASTNodePtr = Box<ASTNode>;
-type ASTNodeList = Vec<ASTNodePtr>;
+pub type ASTNodePtr = Box<ASTNode>;
+pub type ASTNodeList = Vec<ASTNodePtr>;
 
-pub struct AstNodeRoot {
+pub struct ASTNodeRoot {
   pub children: ASTNodeList,
 }
 
-pub struct AstNodeTag {
+pub struct ASTNodeTag {
   pub text: String,
   pub children: ASTNodeList,
-  pub attributes: HashMap<String, AstNodeLiteral>,
+  pub attributes: HashMap<String, ASTNodeLiteral>,
 }
 
-pub struct AstNodeText {
+pub struct ASTNodeText {
   pub text: String,
 }
 
 #[derive(Debug)]
-pub enum AstNodeLiteral {
+pub enum ASTNodeLiteral {
   Str(String),
   Float(f64),
   Bool(bool),
 }
 
 pub enum ASTNode {
-  Root(AstNodeRoot),
-  Tag(AstNodeTag),
-  Text(AstNodeText),
-  Literal(AstNodeLiteral),
+  Root(ASTNodeRoot),
+  Tag(ASTNodeTag),
+  Text(ASTNodeText),
+  Literal(ASTNodeLiteral),
 }
 
 impl ASTNode {
-  pub fn visit(&self, processor: &mut dyn IAstProcessor) {
+  pub fn visit(&self, processor: &mut dyn IASTProcessor) {
     match self {
       ASTNode::Root(r) => {
         processor.visit_begin_root(r);
@@ -107,7 +106,7 @@ impl Parser {
   }
 
   pub fn parse(&mut self) -> Option<ASTNodePtr> {
-    let mut root_node = AstNodeRoot {
+    let mut root_node = ASTNodeRoot {
       children: Vec::new(),
     };
 
@@ -134,25 +133,25 @@ impl Parser {
           }
         }
         StringLiteral(ref str_lit) => {
-          let child_node = Box::new(ASTNode::Literal(AstNodeLiteral::Str(str_lit.clone())));
+          let child_node = Box::new(ASTNode::Literal(ASTNodeLiteral::Str(str_lit.clone())));
           self.advance_token();
 
           parent_child_list.push(child_node);
         }
         NumberLiteral(number) => {
-          let child_node = Box::new(ASTNode::Literal(AstNodeLiteral::Float(number)));
+          let child_node = Box::new(ASTNode::Literal(ASTNodeLiteral::Float(number)));
           self.advance_token();
 
           parent_child_list.push(child_node);
         }
         BoolLiteral(value) => {
-          let child_node = Box::new(ASTNode::Literal(AstNodeLiteral::Bool(value)));
+          let child_node = Box::new(ASTNode::Literal(ASTNodeLiteral::Bool(value)));
           self.advance_token();
 
           parent_child_list.push(child_node);
         }
         Text(ref txt) => {
-          let child_node = Box::new(ASTNode::Text(AstNodeText {
+          let child_node = Box::new(ASTNode::Text(ASTNodeText {
             text: txt.text.clone(),
           }));
           self.advance_token();
@@ -172,17 +171,17 @@ impl Parser {
     }
   }
 
-  fn token_to_ast_literal(tok: Token) -> AstNodeLiteral {
+  fn token_to_ast_literal(tok: Token) -> ASTNodeLiteral {
     match tok {
-      StringLiteral(ref str_lit) => return AstNodeLiteral::Str(str_lit.clone()),
-      NumberLiteral(number) => return AstNodeLiteral::Float(number),
-      BoolLiteral(value) => return AstNodeLiteral::Bool(value),
+      StringLiteral(ref str_lit) => return ASTNodeLiteral::Str(str_lit.clone()),
+      NumberLiteral(number) => return ASTNodeLiteral::Float(number),
+      BoolLiteral(value) => return ASTNodeLiteral::Bool(value),
       _ => panic!("The token was not a literal"),
     }
   }
 
   fn parse_tag_block(&mut self, tag: &TokenTag) -> Option<ASTNodePtr> {
-    let mut tag_node = AstNodeTag::new(tag.text.clone());
+    let mut tag_node = ASTNodeTag::new(tag.text.clone());
 
     self.advance_token();
 
@@ -219,11 +218,17 @@ impl Parser {
           ));
         }
 
+        //
+        // NOTE(Shareef):
+        //   Commas are optional, since all literals
+        //   have a defined token there is no ambiguity when
+        // 
         self.expect(&Token::Character(','));
       }
     }
 
-    // Tag Body is optional
+    // NOTE(Shareef):
+    //   Tag Body is optional
     // if self.require(&Token::Character('{')) {
     if self.expect(&Token::Character('{')) {
       while !self.expect(&Token::Character('}')) {
@@ -293,7 +298,7 @@ impl Parser {
   }
 }
 
-impl AstNodeTag {
+impl ASTNodeTag {
   pub fn new(text: String) -> Self {
     Self {
       text: text,

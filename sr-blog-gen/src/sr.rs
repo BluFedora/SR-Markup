@@ -6,3 +6,4 @@
 pub mod lexer;
 pub mod ast;
 pub mod ast_processor;
+pub mod c_api;

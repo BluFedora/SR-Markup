@@ -1,5 +1,11 @@
 {
   "cSpell.words": [
-    "rustup"
+    "IAST",
+    "cbindgen",
+    "libc",
+    "libloading",
+    "repr",
+    "rustup",
+    "structopt"
   ]
 }

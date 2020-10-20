@@ -156,7 +156,7 @@ impl Lexer {
   fn parse_tag_name(&mut self) -> Token {
     self.advance_cursor(); // Skip over '@'
 
-    // Tag names can be represented by quotes to have spaces in them.
+    // Tag names can be represented by quotes to allow for spaces in the identifier.
     if self.current_char() == '\"' {
       return match self.parse_quoted_string() {
         Ok(token_str) => Token::Tag(TokenTag { text: token_str }),
@@ -204,7 +204,7 @@ impl Lexer {
         let escaped_character = self.current_char();
         self.advance_cursor();
 
-        // NOTE(SR):
+        // NOTE(Shareef):
         //   Anything commented out works in C but not Rust but left in for completeness.
 
         let cc = match escaped_character {

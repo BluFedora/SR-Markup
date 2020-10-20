@@ -1,9 +1,29 @@
+#
+# [See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html]
+# [https://doc.rust-lang.org/cargo/reference/cargo-targets.html#library]
+#
+
 [package]
-name = "sr-blog-gen"
+name    = "sr-blog-gen"
 version = "0.1.0"
 authors = ["Shareef Raheem <r.shareef28@gmail.com>"]
 edition = "2018"
+build   = "src/build.rs"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[build-dependencies]
+cbindgen = "0.15.0"
 
 [dependencies]
+structopt  = "0.3.13"
+libloading = "0.5"
+libc       = "0.2.0"
+
+[[bin]]
+name  = "sr-blog-gen"
+test  = false
+bench = false
+
+[lib]
+name       = "sr_blog_capi"
+crate-type = ["staticlib"]
+path       = "src/lib.rs"
