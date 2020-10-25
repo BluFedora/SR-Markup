@@ -4,6 +4,7 @@
 
 // Test Run
 //   `cargo run -- -i test-blog.blog -l sr.GenBlog.dll`
+//   `cargo run -- -i test-blog.blog -l sr.GenBlog.dll -q > TEST.txt`
 
 // Notes On Rust:
 //      To update rustup : `rustup update`
@@ -21,11 +22,9 @@ use structopt::StructOpt; // [https://docs.rs/structopt/0.3.20/structopt/]
 extern crate libloading; // [https://docs.rs/libloading/0.5.0/libloading/] [https://doc.rust-lang.org/nomicon/ffi.html]
 use libc::{c_char, c_void};
 
+use std::fs::File;
+use std::io::Read;
 use std::path::PathBuf;
-
-fn test_blog_string() -> String {
-  String::from_utf8_lossy(include_bytes!("../test-blog.blog")).to_string()
-}
 
 // CLI
 
@@ -55,25 +54,45 @@ fn main() {
     println!("----------------------------------");
     println!("----- SR Blog Post Generator -----");
     println!("----------------------------------\n");
-
-    // println!("Options: {:?}", options);
   }
-  let source = test_blog_string();
 
-  if options.dll_processor.as_os_str().is_empty() {
-    process_file(&mut DebugProcessor { current_indent: 0 }, source);
-  } else {
-    let mut processor = DynamicLibProcessor::new(options.dll_processor);
+  let input_file = File::open(&options.input);
 
-    if processor.err.is_some() {
-      eprintln!(
-        "[ERROR] Failed to load dynamic lib, {}.",
-        processor.err.unwrap()
-      );
-      return;
+  match input_file {
+    Ok(mut file) => {
+      let mut source = String::new();
+      let source_size = file.read_to_string(&mut source);
+
+      match source_size {
+        Ok(_) => {
+          if options.dll_processor.as_os_str().is_empty() {
+            process_file(&mut DebugProcessor { current_indent: 0 }, source);
+          } else {
+            let mut processor = DynamicLibProcessor::new(options.dll_processor);
+            if processor.err.is_some() {
+              eprintln!(
+                "[ERROR] Failed to load dynamic lib, {}.",
+                processor.err.unwrap()
+              );
+              return;
+            }
+            process_file(&mut processor, source);
+          }
+        }
+        Err(msg) => {
+          eprintln!(
+            "[ERROR] Failed to read file ('{}'), {}.",
+            options.input, msg
+          );
+        }
+      }
     }
-
-    process_file(&mut processor, source);
+    Err(msg) => {
+      eprintln!(
+        "[ERROR] Failed to load file ('{}'), {}.",
+        options.input, msg
+      );
+    }
   }
 }
 
@@ -256,7 +275,7 @@ impl IASTProcessor for DynamicLibProcessor {
             user_data = init_cb();
           }
           Err(_err) => {
-            eprintln!("[WARN]: failed to find a 'srBlogGenInit' callback.");
+            eprintln!("[WARN]: Could not find 'srBlogGenInit' callback.");
           }
         }
       }
@@ -275,7 +294,7 @@ impl IASTProcessor for DynamicLibProcessor {
             }
           }
           Err(_err) => {
-            eprintln!("[WARN]: failed to find a 'srBlogGenProcess' callback.");
+            eprintln!("[WARN]: Could not find 'srBlogGenProcess' callback.");
           }
         }
       }
@@ -290,7 +309,7 @@ impl IASTProcessor for DynamicLibProcessor {
             shutdown_cb(user_data);
           }
           Err(_err) => {
-            eprintln!("[WARN]: failed to find a 'srBlogGenShutdown' callback.");
+            eprintln!("[WARN]: Could not find 'srBlogGenShutdown' callback.");
           }
         }
       }
@@ -375,6 +394,11 @@ impl IASTProcessor for DebugProcessor {
     self.print_indent();
     println!("ROOT DOC END:");
   }
+}
+
+#[test]
+fn test_blog_string() -> String {
+  String::from_utf8_lossy(include_bytes!("../test-blog.blog")).to_string()
 }
 
 #[test]
