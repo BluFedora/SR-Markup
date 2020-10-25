@@ -38,11 +38,11 @@ pub struct TagAttributeView {
 /// cbindgen:prefix-with-name
 pub enum ASTNodeView {
   /// cbindgen:field-names=[text, children, num_attributes, attributes]
-  Tag(StringView, ASTNodeListView, u32, *const TagAttributeView),
+  TagNode(StringView, ASTNodeListView, u32, *const TagAttributeView),
   /// cbindgen:field-names=[text]
-  Text(StringView),
+  TextNode(StringView),
   /// cbindgen:field-names=[value]
-  Literal(ASTNodeLiteralValue),
+  LiteralNode(ASTNodeLiteralValue),
 }
 
 /*

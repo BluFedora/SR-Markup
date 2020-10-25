@@ -27,7 +27,9 @@ using_namespaces = []
 sys_includes = []
 includes = []
 no_includes = false
-after_includes = ""
+after_includes = """
+struct ASTNode;\
+"""
 
 ############################ Code Style Options ################################
 
@@ -38,7 +40,7 @@ documentation_style = "auto"
 
 ############################# Codegen Options ##################################
 
-style = "type"
+style = "both"
 sort_by = "Name" # default for `fn.sort_by` and `const.sort_by`
 
 [defines]
@@ -46,7 +48,7 @@ sort_by = "Name" # default for `fn.sort_by` and `const.sort_by`
 # "feature = serde" = "DEFINE_SERDE"
 
 [export]
-include                      = ["BlogAPI", "ASTNodeView"]
+include                      = ["ASTNodeView"]
 exclude                      = []
 item_types                   = []
 renaming_overrides_prefixing = true

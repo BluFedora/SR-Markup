@@ -3,7 +3,7 @@
 // File:   main.rs
 
 // Test Run
-//   `cargo run -- -l bf.PlatformDLL.dll`
+//   `cargo run -- -i test-blog.blog -l sr.GenBlog.dll`
 
 // Notes On Rust:
 //      To update rustup : `rustup update`
@@ -34,6 +34,9 @@ struct Options {
   #[structopt(short, long)]
   pub quiet: bool,
 
+  #[structopt(short, long)]
+  pub input: String,
+
   #[structopt(short = "l", long = "library", parse(from_os_str), default_value = "")]
   pub dll_processor: PathBuf,
 }
@@ -44,9 +47,7 @@ fn main() {
   if !options.quiet {
     let cwd = std::env::current_dir();
     let args = std::env::args();
-  
     println!("\nCWD {:?}:", cwd.unwrap());
-  
     for arg in args.enumerate() {
       println!("  Arg({}) = '{}'", arg.0, arg.1);
     }
@@ -65,7 +66,10 @@ fn main() {
     let mut processor = DynamicLibProcessor::new(options.dll_processor);
 
     if processor.err.is_some() {
-      eprintln!("[ERROR] Failed to load dynamic lib, {}.", processor.err.unwrap());
+      eprintln!(
+        "[ERROR] Failed to load dynamic lib, {}.",
+        processor.err.unwrap()
+      );
       return;
     }
 
@@ -210,38 +214,35 @@ impl IASTProcessor for DynamicLibProcessor {
   }
 
   fn visit_text(&mut self, text_node: &sr::ast::ASTNodeText) {
-    self.add_to_list(ASTNodeView::Text(DynamicLibProcessor::string_to_view(
+    self.add_to_list(ASTNodeView::TextNode(DynamicLibProcessor::string_to_view(
       &text_node.text,
     )));
   }
 
   fn visit_literal(&mut self, literal_node: &sr::ast::ASTNodeLiteral) {
-    self.add_to_list(ASTNodeView::Literal(DynamicLibProcessor::literal_to_view(
-      literal_node,
-    )));
+    self.add_to_list(ASTNodeView::LiteralNode(
+      DynamicLibProcessor::literal_to_view(literal_node),
+    ));
   }
 
   fn visit_end_tag(&mut self, tag_node: &sr::ast::ASTNodeTag) {
-    self.pop_list();
-
     self.add_attributes(&tag_node.attributes);
-
     let attrib_list = self.current_attributes();
     let attrib_list_len = attrib_list.len() as u32;
     let attrib_list_ptr = attrib_list.as_ptr();
+    let current_list = DynamicLibProcessor::list_to_view(&self.current_list());
+    self.pop_list();
 
-    self.add_to_list(ASTNodeView::Tag(
+    self.add_to_list(ASTNodeView::TagNode(
       DynamicLibProcessor::string_to_view(&tag_node.text),
-      DynamicLibProcessor::list_to_view(&self.current_list()),
+      current_list,
       attrib_list_len,
       attrib_list_ptr,
-    ))
+    ));
   }
 
   fn visit_end_root(&mut self, _: &sr::ast::ASTNodeRoot) {
     unsafe {
-      self.pop_list();
-
       let mut user_data: *mut c_void = std::ptr::null_mut();
       let library = self.library.as_ref().unwrap();
 
@@ -255,7 +256,7 @@ impl IASTProcessor for DynamicLibProcessor {
             user_data = init_cb();
           }
           Err(_err) => {
-            eprint!("[WARN]: failed to find a 'srBlogGenInit' callback.");
+            eprintln!("[WARN]: failed to find a 'srBlogGenInit' callback.");
           }
         }
       }
@@ -274,7 +275,7 @@ impl IASTProcessor for DynamicLibProcessor {
             }
           }
           Err(_err) => {
-            eprint!("[WARN]: failed to find a 'srBlogGenProcess' callback.");
+            eprintln!("[WARN]: failed to find a 'srBlogGenProcess' callback.");
           }
         }
       }
@@ -289,11 +290,13 @@ impl IASTProcessor for DynamicLibProcessor {
             shutdown_cb(user_data);
           }
           Err(_err) => {
-            eprint!("[WARN]: failed to find a 'srBlogGenShutdown' callback.");
+            eprintln!("[WARN]: failed to find a 'srBlogGenShutdown' callback.");
           }
         }
       }
     }
+
+    self.pop_list();
   }
 }
 
