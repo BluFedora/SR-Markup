@@ -1,0 +1,55 @@
+@Header(
+  Title      = "2014 - 2016 Website", 
+  CoverImage = "url(portfolio/web/blufedora_2014-2017/thumbnail.png)"
+) {}
+
+@p {
+  This is the first version of my website. This was before I had a strong
+  understanding of web technologies so this was made in Adobe Muse
+  (now discontinued). I was 15-17 years old at the time so many things about the
+  site just sucked and I didn't have many projects under my belt so it wasn't
+  all that useful.
+}
+
+@link (text = "Here's The Link To Visit The Site", url = "portfolio/web/blufedora_2014-2017/index.html") {}
+
+
+@Header_(title = "Metamorphs AI Framework")
+
+@Section(title = "Behavior Tree Editor") {
+  
+}
+
+@Section(title = "Blackboard") {
+  
+}
+
+@Section(title = "Ability Points (AP)") {
+  
+}
+
+@Section(title = "Vision") {
+
+}
+
+@Section(title = "Strafing") {
+
+}
+
+@Section(title = "Positional / Rotational Tracking") {
+  
+}
+
+@Section(title = "Animation Events") {
+  
+}
+
+@Section(title = "Specific Enemies") {
+  @SubSection(title = "Sand Shark") {
+
+  }
+
+  @SubSection(title = "Scorpion") {
+
+  }
+}

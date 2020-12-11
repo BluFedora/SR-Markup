@@ -5,6 +5,7 @@
 
 use crate::sr::ast_processor::IASTProcessor;
 use crate::Lexer;
+use crate::LexerMode;
 use crate::Token;
 use crate::Token::{
   BoolLiteral, Character, EndOfFile, Error, NumberLiteral, StringLiteral, Tag, Text,
@@ -159,6 +160,11 @@ impl Parser {
           parent_child_list.push(child_node);
         }
         Character(_value) => {
+          //let child_node = Box::new(ASTNode::Text(ASTNodeText {
+          //  text: value.to_string(),
+          //}));
+          // self.advance_token();
+          //parent_child_list.push(child_node);
           break;
         }
         Error(err_msg) => {
@@ -185,7 +191,12 @@ impl Parser {
 
     self.advance_token();
 
+    self.lexer.push_mode(LexerMode::Code);
     if self.expect(&Token::Character('(')) {
+      // TODO(SR):
+      //   For better error messages I can skip until a ')' as that provides
+      //   a pretty good 'sequence point'.
+
       while !self.expect(&Token::Character(')')) {
         let variable_name = self.current_token.clone();
 
@@ -193,6 +204,7 @@ impl Parser {
           &make_empty_token_text(),
           &format!("Variable must be a string name but got {}", variable_name),
         );
+
         self.require(
           &Token::Character('='),
           &format!("'{}' must be assigned to", variable_name),
@@ -213,7 +225,7 @@ impl Parser {
             .insert(var_name_as_str, Parser::token_to_ast_literal(literal_value));
         } else {
           self.error_panic(format!(
-            "'{}' must be assigned a literal value",
+            "'{}' should have been a literal value",
             variable_name
           ));
         }
@@ -221,11 +233,12 @@ impl Parser {
         //
         // NOTE(Shareef):
         //   Commas are optional, since all literals
-        //   have a defined token there is no ambiguity when
-        // 
+        //   have a defined token there is no ambiguity.
+        //
         self.expect(&Token::Character(','));
       }
     }
+    self.lexer.pop_mode();
 
     // NOTE(Shareef):
     //   Tag Body is optional
@@ -264,7 +277,6 @@ impl Parser {
       "Expected {} but got {}, {}",
       *token, self.current_token, err_message
     ));
-
     // Prevent infinite loops by just returning true when at the end of a file.
     return self.current_token == Token::EndOfFile();
   }
@@ -275,13 +287,8 @@ impl Parser {
       return true;
     }
 
-    let is_at_end_of_file = self.current_token == Token::EndOfFile();
-
-    if is_at_end_of_file {
-      self.error_panic(format!("Unexpected eof of while searching for {}", *token));
-    }
     // Prevent infinite loops by just returning true when at the end of a file.
-    return is_at_end_of_file;
+    return self.current_token == Token::EndOfFile();
   }
 
   fn advance_token(&mut self) -> &Token {
@@ -290,7 +297,8 @@ impl Parser {
   }
 
   fn error_panic(&mut self, message: String) {
-    // Advance the token as not to get stuck in infinite loops.
+    // Advance the token as not to get stuck in infinite loops and
+    // better error messages.
     self.advance_token();
     self
       .error_log

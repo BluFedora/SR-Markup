@@ -1,6 +1,6 @@
-@Header(title = "Some Title Text")
+@Header_(title = "Some Title Text")
 
-@p {
+@p_(var = "Some value", another_var = 6.43, v = true) {
   Some test text.
   New line of text.
 
@@ -14,9 +14,11 @@
   }
 }
 
-@TagWithNoBody()
-@TagWithNoBody
+
 
 8.0
 
 This is some top level text ;\) \@ <-- this is not a tag.
+
+@TagWithNoBody
+@TagWithNoBody()

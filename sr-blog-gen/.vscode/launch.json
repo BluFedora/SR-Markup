@@ -9,9 +9,9 @@
       "type": "cppvsdbg",
       "request": "launch",
       "program": "${workspaceFolder}/target/debug/sr-blog-gen.exe",
-      "args": [],
+      "args": ["-l", "../sr.GenBlog.dll", "-i", "test-blog.blog"],
       "stopAtEntry": false,
-      "cwd": "${workspaceFolder}/target/",
+      "cwd": "${workspaceFolder}/",
       "environment": [],
       "externalConsole": false
     }

@@ -1,0 +1,13 @@
+srBlogGenProcess
+TAG Node(Header)
+srBlogGenProcess
+TAG Node(p)
+srBlogGenProcess
+TAG Node(TagWithNoBody)
+srBlogGenProcess
+TAG Node(TagWithNoBody)
+srBlogGenProcess
+Literal Node
+srBlogGenProcess
+Text Node(This is some top level text ;) @ <-- this is not a tag.)
+srBlogGenShutdown

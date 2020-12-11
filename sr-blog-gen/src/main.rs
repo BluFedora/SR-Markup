@@ -1,10 +1,11 @@
 //
 // Author: Shareef Abdoul-Raheem
 // File:   main.rs
+//
 
 // Test Run
-//   `cargo run -- -i test-blog.blog -l sr.GenBlog.dll`
-//   `cargo run -- -i test-blog.blog -l sr.GenBlog.dll -q > TEST.txt`
+//   `cargo run -- -i test-blog.blog -l ../sr.GenBlog.dll`
+//   `cargo run -- -i test-blog.blog -l sr.GenBlog.dll > TEST.txt`
 
 // Notes On Rust:
 //      To update rustup : `rustup update`
@@ -31,7 +32,7 @@ use std::path::PathBuf;
 #[derive(Debug, StructOpt)]
 struct Options {
   #[structopt(short, long)]
-  pub quiet: bool,
+  pub verbose: bool,
 
   #[structopt(short, long)]
   pub input: String,
@@ -43,7 +44,7 @@ struct Options {
 fn main() {
   let options = Options::from_args();
 
-  if !options.quiet {
+  if options.verbose {
     let cwd = std::env::current_dir();
     let args = std::env::args();
     println!("\nCWD {:?}:", cwd.unwrap());
