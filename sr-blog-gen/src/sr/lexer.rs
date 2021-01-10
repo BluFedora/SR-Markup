@@ -105,7 +105,7 @@ impl Lexer {
           let src_len_left = self.source.len() - self.cursor;
 
           if c.is_special_character() || c == ',' {
-            self.advance_cursor();
+            self.advance_cursor(); // ','
             return Token::Character(c);
           } else if src_len_left >= 4 && self.source[self.cursor..(self.cursor + 4)] == *"true" {
             self.advance_cursor(); // 't'

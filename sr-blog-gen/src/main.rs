@@ -47,6 +47,7 @@ fn main() {
   if options.verbose {
     let cwd = std::env::current_dir();
     let args = std::env::args();
+
     println!("\nCWD {:?}:", cwd.unwrap());
     for arg in args.enumerate() {
       println!("  Arg({}) = '{}'", arg.0, arg.1);
@@ -125,8 +126,8 @@ type DynLibShutdownCallbackFn = unsafe extern "C" fn(user_data: *mut c_void);
 
 struct DynamicLibProcessor {
   node_view_list_stack: Vec<Vec<ASTNodeView>>,
-  node_view_list_index: i32,
   node_attribute_storage: Vec<Vec<TagAttributeView>>,
+  node_list_idx_stack: Vec<usize>,
   library: Option<libloading::Library>,
   err: Option<std::io::Error>,
 }
@@ -139,8 +140,8 @@ impl DynamicLibProcessor {
       Ok(library) => {
         return Self {
           node_view_list_stack: Default::default(),
-          node_view_list_index: -1,
           node_attribute_storage: Default::default(),
+          node_list_idx_stack: Default::default(),
           library: Some(library),
           err: None,
         };
@@ -148,8 +149,8 @@ impl DynamicLibProcessor {
       Err(msg) => {
         return Self {
           node_view_list_stack: Default::default(),
-          node_view_list_index: -1,
           node_attribute_storage: Default::default(),
+          node_list_idx_stack: Default::default(),
           library: None,
           err: Some(msg),
         };
@@ -158,8 +159,8 @@ impl DynamicLibProcessor {
   }
 
   fn push_list(&mut self) {
+    self.node_list_idx_stack.push(self.node_view_list_stack.len());
     self.node_view_list_stack.push(Default::default());
-    self.node_view_list_index += 1;
   }
 
   fn add_to_list(&mut self, node_data: ASTNodeView) {
@@ -167,15 +168,16 @@ impl DynamicLibProcessor {
   }
 
   fn pop_list(&mut self) {
-    self.node_view_list_index -= 1;
+    self.node_list_idx_stack.pop();
   }
 
   fn current_list_mut(&mut self) -> &mut Vec<ASTNodeView> {
-    &mut self.node_view_list_stack[self.node_view_list_index as usize]
+    let index = self.current_list_index();
+    &mut self.node_view_list_stack[index]
   }
 
   fn current_list(&self) -> &Vec<ASTNodeView> {
-    &self.node_view_list_stack[self.node_view_list_index as usize]
+    &self.node_view_list_stack[self.current_list_index()]
   }
 
   fn string_to_view(string_value: &String) -> StringView {
@@ -217,6 +219,10 @@ impl DynamicLibProcessor {
 
   fn current_attributes(&self) -> &Vec<TagAttributeView> {
     &self.node_attribute_storage[self.node_attribute_storage.len() - 1]
+  }
+
+  fn current_list_index(&self) -> usize {
+    self.node_list_idx_stack[self.node_list_idx_stack.len() - 1]
   }
 }
 
@@ -394,24 +400,5 @@ impl IASTProcessor for DebugProcessor {
     self.unindent();
     self.print_indent();
     println!("ROOT DOC END:");
-  }
-}
-
-#[test]
-fn test_blog_string() -> String {
-  String::from_utf8_lossy(include_bytes!("../test-blog.blog")).to_string()
-}
-
-#[test]
-fn test_lexer() {
-  let mut lexer = Lexer::new(test_blog_string());
-
-  loop {
-    let token = lexer.get_next_token();
-
-    println!("Line({}) Token::{:?}", lexer.line_no, token);
-    if token == Token::EndOfFile() {
-      break;
-    }
   }
 }
