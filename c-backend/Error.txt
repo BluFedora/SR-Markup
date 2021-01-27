@@ -1,1 +1,0 @@
-[ERROR]: Failed to find Attribute(Src) in TagNodeBody(link).

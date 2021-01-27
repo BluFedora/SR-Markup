@@ -1,12 +1,17 @@
 {
 	"folders": [
-		{
-			"path": "sr-blog-gen"
-		},
-		{
-			"path": "c-backend"
-		}
-	],
+    {
+      "name": "sr-markup",
+      "path": "sr-markup"
+    },
+    {
+      "name": "example-backend",
+      "path": "example-backend"
+    },
+    {
+      "path": "Release"
+    }
+  ],
   "settings": {
     "files.associations": {
       ".clang-format": "yaml",

@@ -1,5 +1,7 @@
-
-#include "sr-blog-gen.h"
+//
+// Shareef Abdoul-Raheem
+//
+#include "sr-markup.h"
 
 #include "bf/utility/bifrost_json.hpp"
 
@@ -103,8 +105,8 @@ StringView ASTNodeLiteralValueString(const ASTNodeLiteralValue* node)
 
 using namespace bf::json;
 
-#pragma comment(lib, "BF_DataStructuresC_static.lib")
-#pragma comment(lib, "BF_JsonCpp.lib")
+#pragma comment(lib, "lib/BF_DataStructuresC_static.lib")
+#pragma comment(lib, "lib/BF_JsonCpp.lib")
 
 struct Allocator : public bf::IMemoryManager
 {
@@ -306,12 +308,19 @@ static void RecursivelyProcessNode(const ASTNode* parent_node, Value& parent_jso
 
 extern "C" 
 {
-  __declspec(dllexport) void* srBlogGenInit(void)
+  __declspec(dllexport) void* srMarkupInit(const Arguments* args)
   {
+    /*
+    for (uint32_t i = 0; i < args->num_args; ++i)
+    {
+      std::printf("Arg(%i) = %.*s\n", int(i), STR_PRINT(args->args[i]));
+    }
+    */
+   (void)args;
     return nullptr;
   }
  
-  __declspec(dllexport) void srBlogGenProcess(const ASTNode* node, void* user_data)
+  __declspec(dllexport) void srMarkupProcess(const ASTNode* node, void* user_data)
   {
     Value node_as_json;
     RecursivelyProcessNode(node, node_as_json);
@@ -322,7 +331,7 @@ extern "C"
     }
   }
 
-  __declspec(dllexport) void srBlogGenShutdown(void* user_data)
+  __declspec(dllexport) void srMarkupShutdown(void* user_data)
   {
     //s_ContentJson.cast<Array>(s_A);
     s_RootJson["Content"] = s_ContentJson;

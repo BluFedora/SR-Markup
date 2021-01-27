@@ -13,6 +13,12 @@ pub struct StringView {
 }
 
 #[repr(C)]
+pub struct Arguments {
+  pub num_args: u32,
+  pub args: * const StringView,
+}
+
+#[repr(C)]
 pub struct ASTNodeListView {
   pub num_nodes: u32,
   pub nodes: *const ASTNodeView,
@@ -46,15 +52,6 @@ pub enum ASTNodeView {
 }
 
 /*
-#[repr(C)]
-pub struct BlogAPI {
-  user_data: *mut c_void,
-  attribute_begin: extern "C" fn(node: *mut c_void),
-  attribute_has_next: extern "C" fn(node: *mut c_void) -> bool,
-  attribute_next: extern "C" fn(node: *mut c_void),
-  get_text: extern "C" fn(node: *mut c_void),
-}
-
 #[no_mangle]
 pub extern "C" fn srBlogNumChildren(node_ptr: *const c_void) -> u32 {
   let node: *const ASTNode = node_ptr as *const ASTNode;

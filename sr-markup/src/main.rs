@@ -43,22 +43,23 @@ struct Options {
 
 fn main() {
   let options = Options::from_args();
-
+  let args = std::env::args();
+  
   if options.verbose {
     let cwd = std::env::current_dir();
-    let args = std::env::args();
-
+    
     println!("\nCWD {:?}:", cwd.unwrap());
     for arg in args.enumerate() {
       println!("  Arg({}) = '{}'", arg.0, arg.1);
     }
-
+    
     println!("----------------------------------");
     println!("----- SR Blog Post Generator -----");
     println!("----------------------------------\n");
   }
-
-  let input_file = File::open(&options.input);
+  
+  let args_as_vec = std::env::args().collect();
+  let input_file  = File::open(&options.input);
 
   match input_file {
     Ok(mut file) => {
@@ -70,7 +71,7 @@ fn main() {
           if options.dll_processor.as_os_str().is_empty() {
             process_file(&mut DebugProcessor { current_indent: 0 }, source);
           } else {
-            let mut processor = DynamicLibProcessor::new(options.dll_processor);
+            let mut processor = DynamicLibProcessor::new(options.dll_processor, args_as_vec);
             if processor.err.is_some() {
               eprintln!(
                 "[ERROR] Failed to load dynamic lib, {}.",
@@ -119,7 +120,7 @@ fn process_file(processor: &mut dyn IASTProcessor, source: String) {
 
 /* Dyn-Lib Processor */
 
-type DynLibInitCallbackFn = unsafe extern "C" fn() -> *mut c_void;
+type DynLibInitCallbackFn = unsafe extern "C" fn(args:* const Arguments) -> *mut c_void;
 type DynLibProcessCallbackFn =
   unsafe extern "C" fn(node: *const ASTNodeView, user_data: *mut c_void) -> bool;
 type DynLibShutdownCallbackFn = unsafe extern "C" fn(user_data: *mut c_void);
@@ -130,10 +131,11 @@ struct DynamicLibProcessor {
   node_list_idx_stack: Vec<usize>,
   library: Option<libloading::Library>,
   err: Option<std::io::Error>,
+  args: Vec<String>,
 }
 
 impl DynamicLibProcessor {
-  fn new(dll_path: PathBuf) -> Self {
+  fn new(dll_path: PathBuf, args: Vec<String>) -> Self {
     let dll_lib = libloading::Library::new(dll_path);
 
     match dll_lib {
@@ -144,6 +146,7 @@ impl DynamicLibProcessor {
           node_list_idx_stack: Default::default(),
           library: Some(library),
           err: None,
+          args: args,
         };
       }
       Err(msg) => {
@@ -153,6 +156,7 @@ impl DynamicLibProcessor {
           node_list_idx_stack: Default::default(),
           library: None,
           err: Some(msg),
+          args: args,
         };
       }
     }
@@ -272,17 +276,30 @@ impl IASTProcessor for DynamicLibProcessor {
       let mut user_data: *mut c_void = std::ptr::null_mut();
       let library = self.library.as_ref().unwrap();
 
+      let mut args_str_views:Vec<StringView> = Default::default();
+
+      for arg in &self.args {
+        args_str_views.push(
+          DynamicLibProcessor::string_to_view(&arg)
+        );
+      }
+
+      let args = Arguments{
+        num_args : args_str_views.len() as u32,
+        args : args_str_views.as_ptr(),
+      };
+
       // Init
       {
         let init_cb_res: libloading::Result<libloading::Symbol<DynLibInitCallbackFn>> =
-          library.get(b"srBlogGenInit");
+          library.get(b"srMarkupInit");
 
         match init_cb_res {
           Ok(init_cb) => {
-            user_data = init_cb();
+            user_data = init_cb(&args);
           }
           Err(_err) => {
-            eprintln!("[WARN]: Could not find 'srBlogGenInit' callback.");
+            eprintln!("[WARN]: Could not find 'srMarkupInit' callback.");
           }
         }
       }
@@ -290,7 +307,7 @@ impl IASTProcessor for DynamicLibProcessor {
       // Process
       {
         let process_cb_res: libloading::Result<libloading::Symbol<DynLibProcessCallbackFn>> =
-          library.get(b"srBlogGenProcess");
+          library.get(b"srMarkupProcess");
 
         match process_cb_res {
           Ok(process_cb) => {
@@ -301,7 +318,7 @@ impl IASTProcessor for DynamicLibProcessor {
             }
           }
           Err(_err) => {
-            eprintln!("[WARN]: Could not find 'srBlogGenProcess' callback.");
+            eprintln!("[WARN]: Could not find 'srMarkupProcess' callback.");
           }
         }
       }
@@ -309,14 +326,14 @@ impl IASTProcessor for DynamicLibProcessor {
       // Shutdown
       {
         let shutdown_cb_res: libloading::Result<libloading::Symbol<DynLibShutdownCallbackFn>> =
-          library.get(b"srBlogGenShutdown");
+          library.get(b"srMarkupShutdown");
 
         match shutdown_cb_res {
           Ok(shutdown_cb) => {
             shutdown_cb(user_data);
           }
           Err(_err) => {
-            eprintln!("[WARN]: Could not find 'srBlogGenShutdown' callback.");
+            eprintln!("[WARN]: Could not find 'srMarkupShutdown' callback.");
           }
         }
       }
