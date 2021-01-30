@@ -65,6 +65,8 @@ If you want some more information on the various flags just do `sr-markup -h`.
 
 @Text(Size = "Full") {
   This is some dummy text!
+
+  @"A Fun Tag With Spaces In The Name"()
 }
 
 @p (FontSize = "20px") 
@@ -95,6 +97,8 @@ The list of `TagAttribute`s on `TagNode`s can havea trailing comma.
 @TagWithNoAttributes { Some Content }
 
 @TagWithNoContent(Attrib = "Hello")
+
+@"Tag With Spaces In The Name"
 ```
 
 

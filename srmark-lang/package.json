@@ -1,0 +1,25 @@
+{
+    "name": "srmark-lang",
+    "displayName": "sr-markup",
+    "description": "Syntax highlighting for SR Markup.",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.52.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [{
+            "id": "srmark",
+            "aliases": ["SR Markup", "srmark"],
+            "extensions": [".srmark"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "srmark",
+            "scopeName": "source.srmark",
+            "path": "./syntaxes/srmark.tmLanguage.json"
+        }]
+    }
+}

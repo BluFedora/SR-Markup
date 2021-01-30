@@ -49,7 +49,7 @@ impl std::fmt::Display for Token {
 
 // Lexer
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 pub enum LexerMode {
   Text, // This mode is loose and will allow spaces in identifier type of characters groups.
   Code, // This mode is strict and will only allow identifiers typical of programming languages.
@@ -104,7 +104,7 @@ impl Lexer {
         _ => {
           let src_len_left = self.source.len() - self.cursor;
 
-          if c.is_special_character() || c == ',' {
+          if c.is_special_character() || (c == ',' && self.mode == LexerMode::Code) {
             self.advance_cursor(); // ','
             return Token::Character(c);
           } else if src_len_left >= 4 && self.source[self.cursor..(self.cursor + 4)] == *"true" {

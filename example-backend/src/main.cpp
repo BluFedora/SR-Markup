@@ -131,7 +131,8 @@ static void RecursivelyProcessNode(const ASTNode* parent_node, Value& parent_jso
         const auto* title     = FindAttribute("Title", tag_node, AsStr);
         const auto* cover_img = FindAttribute("CoverImage", tag_node, AsStr);
         const auto* date      = FindAttribute("Date", tag_node, AsStr);
-
+        const auto* theme     = FindAttribute("Theme", tag_node, AsStr);
+        
         if (title && cover_img && date)
         {
           const auto& title_str_value = title->as_str.value;
@@ -145,6 +146,11 @@ static void RecursivelyProcessNode(const ASTNode* parent_node, Value& parent_jso
             Pair{"Author", String("By: Shareef Raheem") },
             Pair{"Date",   String(date_str_value.str_start, date_str_value.str_end) },
           };
+
+          if (theme)
+          {
+            s_RootJson["Header"]["Theme"] = String(theme->as_str.value.str_start, theme->as_str.value.str_end);
+          }
         }
 
         return;

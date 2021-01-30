@@ -1,0 +1,82 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "SR Markup",
+	"patterns": [
+		{
+			"include": "#strings"
+    },
+    {
+			"include": "#tag-ext"
+    },
+    {
+			"include": "#tag"
+    },
+    {
+			"include": "#curly"
+		}
+	],
+	"repository": {
+		"keywords": {
+			"patterns": [{
+				"name": "keyword.control.srmark",
+				"match": "\\b(if|while|for|return)\\b"
+			}]
+		},
+		"strings": {
+			"name": "string.quoted.double.srmark",
+			"begin": "(\"|\\\\\")",
+			"end": "(\"|\\\\\")",
+			"patterns": [
+				{
+					"name": "constant.character.escape.srmark",
+					"match": "\\\\."
+				}
+			]
+    },
+    "tag" : {
+      "name" : "entity.name.tag.srmark",
+      "begin": "@(\")*",
+      "end": "(\\w|\\d|\\s)+(\")*",
+      "patterns": [
+      ]
+    },
+    "curly" : {
+      "name" : "markup.raw",
+      "begin": "{",
+      "end": "}",
+      "patterns": [
+        {
+          "include": "$self"
+        },
+        {
+          "include": "#tag"
+        },
+        {
+          "include": "#parens"
+        }
+      ]
+    },
+    "tag-ext" : {
+      "name" :"entity.name.tag.srmark",
+      "begin": "@(\\w|\\d)+(\\s)*\\(",
+      "end": "\\)",
+      "patterns": [
+        {
+          "include": "#tag"
+        },
+        {
+          "include": "#strings"
+        },
+        {
+          "name" :"variable.language",
+          "match": "(\\w|\\d)+"
+        },
+        {
+          "name" : "variable.parameter",
+          "match" : "="
+        }
+      ]
+    }
+	},
+	"scopeName": "source.srmark"
+}
