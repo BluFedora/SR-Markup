@@ -52,7 +52,7 @@
           "include": "#tag"
         },
         {
-          "include": "#parens"
+          "include": "#tag-ext"
         }
       ]
     },
