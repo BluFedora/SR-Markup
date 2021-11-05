@@ -41,7 +41,7 @@ to generate a json file with the same information.
 # By default the output of the program will go to standard out.
 # Errors will be printed out into standard error.
 
-# This will print out th AST with the default debug printer.
+# This will print out the AST with the default debug printer.
 sr-markup -i InputDocument.srmark
 
 # This will use the functions in `Library.dll` to do the processing of the AST.
