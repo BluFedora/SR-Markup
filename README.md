@@ -1,7 +1,6 @@
 # `@SR{ Markup }`
 
-This is a simple markup language (in the same vein as markdown) for structured
-document writing.
+This is a simple markup language (in the same vein as markdown) for structured document writing.
 
 ## Overview
 
@@ -131,7 +130,7 @@ Boolean = true / false
 ```
 MIT License
 
-Copyright (c) 2021 Shareef Abdoul-Raheem
+Copyright (c) 2020-2023 Shareef Abdoul-Raheem
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

@@ -104,7 +104,7 @@ impl Lexer {
         _ => {
           let src_len_left = self.source.len() - self.cursor;
 
-          if c.is_special_character() || (c == ',' && self.mode == LexerMode::Code) {
+          if c.is_special_character(self.mode) {
             self.advance_cursor(); // ','
             return Token::Character(c);
           } else if src_len_left >= 4 && self.source[self.cursor..(self.cursor + 4)] == *"true" {
@@ -223,26 +223,17 @@ impl Lexer {
         let escaped_character = self.current_char();
         self.advance_cursor();
 
-        // NOTE(Shareef):
-        //   Anything commented out works in C but not Rust but 
-        //   left in for completeness.
-
-        let cc = match escaped_character {
-          // 'a' => '\a',
-          // 'b' => '\b',
-          // 'f' => '\f',
+        let actual_character = match escaped_character {
           'n' => '\n',
           'r' => '\r',
           't' => '\t',
-          // 'v' => '\v',
           '\\' => '\\',
           '\'' => '\'',
           '\"' => '\"',
-          // '\?' => '\?',
           _ => escaped_character,
         };
 
-        text_block.push(cc);
+        text_block.push(actual_character);
       } else if c_was_newline {
         self.skip_whitespace();
         text_block.push(' ');
@@ -303,31 +294,30 @@ impl Lexer {
 // Character Helpers
 
 trait CharExt {
-  fn is_special_character(&self) -> bool;
+  fn is_special_character(&self, mode: LexerMode) -> bool;
   fn is_text_block_ending_character(&self, mode: LexerMode) -> bool;
 }
 
 impl CharExt for char {
-  fn is_special_character(&self) -> bool {
+  fn is_special_character(&self, mode: LexerMode) -> bool {
     return *self == '@'
       || *self == '{'
       || *self == '}'
       || *self == '('
       || *self == ')'
-      || *self == '=';
+      || *self == '='
+      || (*self == ',' && mode == LexerMode::Code);
   }
 
   fn is_text_block_ending_character(&self, mode: LexerMode) -> bool {
+
+    if *self == '@' || *self == '{' || *self == '}' || *self == '=' {
+      return true;
+    }
+
     match mode {
-      LexerMode::Text => return *self == '@'
-      || *self == '{'
-      || *self == '}'
-      || *self == '=',
-      LexerMode::Code => return *self == '@'
-      || *self == '{'
-      || *self == '}'
-      || *self == '=' ||
-      *self == ' ',
+      LexerMode::Text => return false,
+      LexerMode::Code => return *self == ' ',
     }
   }
 }

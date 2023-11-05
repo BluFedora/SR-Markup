@@ -100,17 +100,16 @@ fn main() {
 }
 
 fn process_file(processor: &mut dyn IASTProcessor, source: String) {
-  let lexer = Lexer::new(source);
-  let mut parser = Parser::new(lexer);
-  let syntax_tree = parser.parse();
+  let lexer: Lexer = Lexer::new(source);
+  let mut parser: Parser = Parser::new(lexer);
+  let syntax_tree: SRMarkParseResult = parser.parse();
 
   match syntax_tree {
-    Some(raw_tree) => raw_tree.visit(processor),
-    None => {
-      eprintln!("ERRORS:");
-
-      for err in &parser.error_log {
-        eprintln!("{}", err);
+    Ok(root_node) => root_node.visit(processor),
+    Err(error_log) => {
+      eprintln!("Parse Error:");
+      for err in &error_log.errors {
+        eprintln!("  Line({}): {}\n", err.line_number, err.message);
       }
     }
   }

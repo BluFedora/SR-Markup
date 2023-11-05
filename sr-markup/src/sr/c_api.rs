@@ -4,51 +4,51 @@
 
 // Dynamic Library API
 
-use libc::{c_char};
+use libc::c_char;
 
 #[repr(C)]
 pub struct StringView {
-  pub str_start: *const c_char,
-  pub str_end: *const c_char,
+    pub str_start: *const c_char,
+    pub str_end: *const c_char,
 }
 
 #[repr(C)]
 pub struct Arguments {
-  pub num_args: u32,
-  pub args: * const StringView,
+    pub num_args: u32,
+    pub args: *const StringView,
 }
 
 #[repr(C)]
 pub struct ASTNodeListView {
-  pub num_nodes: u32,
-  pub nodes: *const ASTNodeView,
+    pub num_nodes: u32,
+    pub nodes: *const ASTNodeView,
 }
 
 #[repr(C)]
 pub enum ASTNodeLiteralValue {
-  /// cbindgen:field-names=[value]
-  AsStr(StringView),
-  /// cbindgen:field-names=[value]
-  AsNumber(f64),
-  /// cbindgen:field-names=[value]
-  AsBoolean(bool),
+    /// cbindgen:field-names=[value]
+    AsStr(StringView),
+    /// cbindgen:field-names=[value]
+    AsNumber(f64),
+    /// cbindgen:field-names=[value]
+    AsBoolean(bool),
 }
 
 #[repr(C)]
 pub struct TagAttributeView {
-  pub key: StringView,
-  pub value: ASTNodeLiteralValue,
+    pub key: StringView,
+    pub value: ASTNodeLiteralValue,
 }
 
 #[repr(C)]
 /// cbindgen:prefix-with-name
 pub enum ASTNodeView {
-  /// cbindgen:field-names=[text, children, num_attributes, attributes]
-  TagNode(StringView, ASTNodeListView, u32, *const TagAttributeView),
-  /// cbindgen:field-names=[text]
-  TextNode(StringView),
-  /// cbindgen:field-names=[value]
-  LiteralNode(ASTNodeLiteralValue),
+    /// cbindgen:field-names=[text, children, num_attributes, attributes]
+    TagNode(StringView, ASTNodeListView, u32, *const TagAttributeView),
+    /// cbindgen:field-names=[text]
+    TextNode(StringView),
+    /// cbindgen:field-names=[value]
+    LiteralNode(ASTNodeLiteralValue),
 }
 
 /*

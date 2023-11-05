@@ -8,6 +8,7 @@ use crate::ASTNodeRoot;
 use crate::ASTNodeTag;
 use crate::ASTNodeText;
 
+/// Helper Interface for traversing an SRMark AST.
 pub trait IASTProcessor {
   fn has_error(&mut self) -> bool;
   fn visit_begin_root(&mut self, root_node: &ASTNodeRoot) -> ();
