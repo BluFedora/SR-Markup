@@ -1,8 +1,25 @@
 //
 // Shareef Abdoul-Raheem
 //
+//
 
-pub mod sr;
+pub mod ast_processor;
+pub use ast_processor::IASTProcessor;
+pub use ast_processor::ASTProcessorVisitResult;
+pub use ast_processor::visit_ast;
 
-use sr::ast::*;
-use sr::lexer::*;
+pub mod ast;
+pub use ast::ASTNode;
+pub use ast::ASTNodeList;
+pub use ast::ASTNodeLiteral;
+pub use ast::ASTNodePtr;
+pub use ast::ASTNodeRoot;
+pub use ast::ASTNodeTag;
+pub use ast::ASTNodeText;
+
+pub mod lexer;
+pub use lexer::Lexer;
+
+pub mod parser;
+pub use parser::ParseResult;
+pub use parser::Parser;

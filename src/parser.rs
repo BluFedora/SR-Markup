@@ -1,95 +1,23 @@
 //
 // Author: Shareef Abdoul-Raheem
-// File:   ast.rs
+// File:   parser.rs
 //
 
-use crate::sr::ast_processor::IASTProcessor;
+use crate::ast::ASTNode;
+use crate::ast::ASTNodeList;
+use crate::ast::ASTNodeLiteral;
+use crate::ast::ASTNodePtr;
+use crate::ast::ASTNodeRoot;
+use crate::ast::ASTNodeTag;
+use crate::ast::ASTNodeText;
+
+use crate::lexer::LexerMode;
+use crate::lexer::Token;
+use crate::lexer::TokenTag;
+use crate::lexer::TokenText;
 use crate::Lexer;
-use crate::LexerMode;
-use crate::Token;
-use crate::Token::{
-    BoolLiteral, Character, EndOfFile, Error, NumberLiteral, StringLiteral, Tag, Text,
-};
-use crate::TokenTag;
-use crate::TokenText;
-use std::collections::HashMap;
+
 use std::mem::swap;
-
-// AST Nodes
-
-pub type ASTNodePtr = Box<ASTNode>;
-pub type ASTNodeList = Vec<ASTNodePtr>;
-
-/// A parsed document will have exactly one root ast node.
-pub struct ASTNodeRoot {
-    pub children: ASTNodeList,
-}
-
-pub struct ASTNodeTag {
-    pub text: String,
-    pub children: ASTNodeList,
-    pub attributes: HashMap<String, ASTNodeLiteral>,
-}
-
-pub struct ASTNodeText {
-    pub text: String,
-}
-
-#[derive(Debug)]
-pub enum ASTNodeLiteral {
-    Str(String),
-    Float(f64),
-    Bool(bool),
-}
-
-pub enum ASTNode {
-    Root(ASTNodeRoot),
-    Tag(ASTNodeTag),
-    Text(ASTNodeText),
-    Literal(ASTNodeLiteral),
-}
-
-impl ASTNode {
-    pub fn visit(&self, processor: &mut dyn IASTProcessor) {
-        match self {
-            ASTNode::Root(r) => {
-                processor.visit_begin_root(r);
-
-                for child in &r.children {
-                    child.visit(processor);
-
-                    if processor.has_error() {
-                        break;
-                    }
-                }
-
-                processor.visit_end_root(r);
-            }
-            ASTNode::Tag(t) => {
-                processor.visit_begin_tag(t);
-
-                for child in &t.children {
-                    child.visit(processor);
-                    if processor.has_error() {
-                        break;
-                    }
-                }
-                processor.visit_end_tag(t);
-            }
-            ASTNode::Text(t) => processor.visit_text(t),
-            ASTNode::Literal(l) => processor.visit_literal(l),
-        }
-    }
-}
-
-fn make_empty_token_text() -> Token {
-    return Token::Text(TokenText {
-        line_no_start: 0,
-        line_no_end_with_content: 0,
-        line_no_end: 0,
-        text: "".to_string(),
-    });
-}
 
 pub struct ParseError {
     pub message: String,
@@ -100,7 +28,7 @@ pub struct ParseErrors {
     pub errors: Vec<ParseError>,
 }
 
-pub type SRMarkParseResult = Result<ASTNodePtr, ParseErrors>;
+pub type ParseResult = Result<ASTNodePtr, ParseErrors>;
 
 /// Parses an sr-mark source text provided by the passed in lexer.
 pub struct Parser {
@@ -118,7 +46,7 @@ impl Parser {
         }
     }
 
-    pub fn parse(&mut self) -> SRMarkParseResult {
+    pub fn parse(&mut self) -> ParseResult {
         let mut root_node = ASTNodeRoot {
             children: Vec::new(),
         };
@@ -142,33 +70,33 @@ impl Parser {
             let current_token = self.current_token.clone();
 
             match current_token {
-                Tag(ref tt) => {
+                Token::Tag(ref tt) => {
                     let tt_node = self.parse_tag_block(&tt);
 
                     if tt_node.is_some() {
                         parent_child_list.push(tt_node.unwrap());
                     }
                 }
-                StringLiteral(ref str_lit) => {
+                Token::StringLiteral(ref str_lit) => {
                     let child_node =
                         Box::new(ASTNode::Literal(ASTNodeLiteral::Str(str_lit.clone())));
                     self.advance_token();
 
                     parent_child_list.push(child_node);
                 }
-                NumberLiteral(number) => {
+                Token::NumberLiteral(number) => {
                     let child_node = Box::new(ASTNode::Literal(ASTNodeLiteral::Float(number)));
                     self.advance_token();
 
                     parent_child_list.push(child_node);
                 }
-                BoolLiteral(value) => {
+                Token::BoolLiteral(value) => {
                     let child_node = Box::new(ASTNode::Literal(ASTNodeLiteral::Bool(value)));
                     self.advance_token();
 
                     parent_child_list.push(child_node);
                 }
-                Text(ref txt) => {
+                Token::Text(ref txt) => {
                     let child_node = Box::new(ASTNode::Text(ASTNodeText {
                         text: txt.text.clone(),
                     }));
@@ -176,7 +104,7 @@ impl Parser {
 
                     parent_child_list.push(child_node);
                 }
-                Character(_value) => {
+                Token::Character(_value) => {
                     //let child_node = Box::new(ASTNode::Text(ASTNodeText {
                     //  text: value.to_string(),
                     //}));
@@ -184,10 +112,10 @@ impl Parser {
                     //parent_child_list.push(child_node);
                     break;
                 }
-                Error(err_msg) => {
+                Token::Error(err_msg) => {
                     self.error_panic(format!("Tokenizer {}", err_msg));
                 }
-                EndOfFile() => {
+                Token::EndOfFile() => {
                     break;
                 }
             }
@@ -196,9 +124,9 @@ impl Parser {
 
     fn token_to_ast_literal(tok: Token) -> ASTNodeLiteral {
         match tok {
-            StringLiteral(ref str_lit) => return ASTNodeLiteral::Str(str_lit.clone()),
-            NumberLiteral(number) => return ASTNodeLiteral::Float(number),
-            BoolLiteral(value) => return ASTNodeLiteral::Bool(value),
+            Token::StringLiteral(ref str_lit) => return ASTNodeLiteral::Str(str_lit.clone()),
+            Token::NumberLiteral(number) => return ASTNodeLiteral::Float(number),
+            Token::BoolLiteral(value) => return ASTNodeLiteral::Bool(value),
             _ => panic!("The token was not a literal"),
         }
     }
@@ -324,12 +252,11 @@ impl Parser {
     }
 }
 
-impl ASTNodeTag {
-    pub fn new(text: String) -> Self {
-        Self {
-            text: text,
-            children: Default::default(),
-            attributes: Default::default(),
-        }
-    }
+fn make_empty_token_text() -> Token {
+    return Token::Text(TokenText {
+        line_no_start: 0,
+        line_no_end_with_content: 0,
+        line_no_end: 0,
+        text: "".to_string(),
+    });
 }
