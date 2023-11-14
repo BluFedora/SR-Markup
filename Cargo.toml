@@ -9,10 +9,8 @@ version = "1.0.0"
 authors = ["Shareef Raheem <r.shareef28@gmail.com>"]
 edition = "2021"
 
-[build-dependencies]
-cbindgen = "0.15.0"
-
 [dependencies]
+minijinja = "1.0.9"
 structopt = { version = "0.3" }
 
 [[bin]]
@@ -21,10 +19,14 @@ test  = false
 bench = false
 path  = "src/bin/ast_dumper.rs"
 
+[[bin]]
+name  = "blufedora-blog-gen"
+path  = "src/bin/static_site_gen.rs"
+
 [lib]
-name = "srmarkup"
-test = false
-doctest = true
-bench = false
-doc = true
+name       = "srmarkup"
+test       = false
+doctest    = true
+bench      = false
+doc        = true
 crate-type = ["lib"]

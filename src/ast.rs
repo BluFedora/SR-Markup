@@ -22,7 +22,6 @@ pub enum ASTNodeLiteral {
     Bool(bool),
 }
 
-
 /// main building block for the document, can be nested and have key value pair of extra metadata.
 pub struct ASTNodeTag {
     pub text: String,

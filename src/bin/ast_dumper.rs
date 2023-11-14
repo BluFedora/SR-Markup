@@ -4,7 +4,7 @@
 //
 
 // Test Run
-//   `cargo run -- --input TestInput.txt`
+//   `cargo run --bin "sr-markup-ast-dump" -- --input TestInput.txt`
 
 // Notes On Rust:
 //      To update rustup : `rustup update`
@@ -55,7 +55,7 @@ fn main() {
                 Ok(_) => {
                     let lexer = srmarkup::Lexer::new(source);
                     let mut parser = srmarkup::Parser::new(lexer);
-                    let parse_result = parser.parse();
+                    let parse_result: srmarkup::ParseResult = parser.parse();
 
                     match parse_result {
                         Ok(root_node) => {

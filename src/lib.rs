@@ -1,7 +1,6 @@
 //
 // Shareef Abdoul-Raheem
 //
-//
 
 pub mod ast_processor;
 pub use ast_processor::IASTProcessor;

@@ -8,12 +8,12 @@
       "name": "(Windows) Launch",
       "type": "cppvsdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/target/debug/sr-markup.exe",
-      "args": ["-l", "sr.GenBlog.dll", "-i", "demo.srmark"],
+      "program": "${workspaceFolder}/target/debug/sr-markup-ast-dump.exe",
+      "args": ["--input", "TestInput.txt", "-v"],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}/",
       "environment": [],
-      "externalConsole": false
+      "console": "externalTerminal"
     }
   ]
 }
