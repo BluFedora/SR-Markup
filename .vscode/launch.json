@@ -5,11 +5,22 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "(Windows) Launch",
+      "name": "AST Dumper (Debug)",
       "type": "cppvsdbg",
       "request": "launch",
       "program": "${workspaceFolder}/target/debug/sr-markup-ast-dump.exe",
       "args": ["--input", "TestInput.txt", "-v"],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/",
+      "environment": [],
+      "console": "externalTerminal"
+    },
+    {
+      "name": "Blog Gen (Debug)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/target/debug/blufedora-blog-gen.exe",
+      "args": ["--input", "TestInput.txt"],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}/",
       "environment": [],

@@ -12,6 +12,8 @@
 //       Open Local Docs : `rustup doc`
 
 use srmarkup;
+use srmarkup::ASTNodeLiteral;
+use srmarkup::ASTProcessorVisitResult;
 
 use std::fs::File;
 use std::io::Read;
@@ -64,7 +66,7 @@ fn main() {
                                 &mut DebugProcessor::new(options.indent_spaces),
                             );
 
-                            if visit_result == srmarkup::ASTProcessorVisitResult::Halt {
+                            if visit_result == ASTProcessorVisitResult::Halt {
                                 println!("Failed to visit all AST nodes.");
                             }
                         }
@@ -124,16 +126,13 @@ impl DebugProcessor {
 }
 
 impl srmarkup::IASTProcessor for DebugProcessor {
-    fn visit_begin_root(&mut self, _: &srmarkup::ASTNodeRoot) -> srmarkup::ASTProcessorVisitResult {
+    fn visit_begin_root(&mut self, _: &srmarkup::ASTNodeRoot) -> ASTProcessorVisitResult {
         println!("(root-begin){{");
         self.indent();
-        return srmarkup::ASTProcessorVisitResult::Continue;
+        return ASTProcessorVisitResult::Continue;
     }
 
-    fn visit_begin_tag(
-        &mut self,
-        tag_node: &srmarkup::ASTNodeTag,
-    ) -> srmarkup::ASTProcessorVisitResult {
+    fn visit_begin_tag(&mut self, tag_node: &srmarkup::ASTNodeTag) -> ASTProcessorVisitResult {
         self.print_indent();
         println!("Tag({}) {{", tag_node.text);
         self.indent();
@@ -153,25 +152,19 @@ impl srmarkup::IASTProcessor for DebugProcessor {
 
             self.unindent();
         }
-        return srmarkup::ASTProcessorVisitResult::Continue;
+        return ASTProcessorVisitResult::Continue;
     }
 
-    fn visit_text(
-        &mut self,
-        text_node: &srmarkup::ASTNodeText,
-    ) -> srmarkup::ASTProcessorVisitResult {
+    fn visit_text(&mut self, text_node: &srmarkup::ASTNodeText) -> ASTProcessorVisitResult {
         self.print_indent();
         println!("TEXT({})", text_node.text);
-        return srmarkup::ASTProcessorVisitResult::Continue;
+        return ASTProcessorVisitResult::Continue;
     }
 
-    fn visit_literal(
-        &mut self,
-        literal_node: &srmarkup::ASTNodeLiteral,
-    ) -> srmarkup::ASTProcessorVisitResult {
+    fn visit_literal(&mut self, literal_node: &ASTNodeLiteral) -> ASTProcessorVisitResult {
         self.print_indent();
         println!("LITERAL({:?})", literal_node);
-        return srmarkup::ASTProcessorVisitResult::Continue;
+        return ASTProcessorVisitResult::Continue;
     }
 
     fn visit_end_tag(&mut self, _: &srmarkup::ASTNodeTag) {
