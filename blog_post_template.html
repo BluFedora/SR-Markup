@@ -1,0 +1,59 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+
+  <title>{{ title }}</title>
+  <meta name="description" content="Shareef Raheem's portfolio and blog site.">
+  <meta name="author" content="Shareef Raheem">
+  <meta name="theme-color" content="#333">
+  <meta name="viewport" content="width = device-width, initial-scale = 1.0" id="meta">
+
+  <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?skin=desert"></script>
+  
+  <link rel="shortcut icon" type="image/png" href="images/favicon.png">
+
+  <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/post-themes/base-theme.css">
+  {% if theme %}<link rel="stylesheet" href="css/post-themes/{{theme}}.css">{% endif %}
+</head>
+
+<body class="post-background">
+  <section class="main-article" id="main_article">
+    <a id="menu" href="blog.html">
+      <div class="menu-bar"></div>
+      <div class="menu-bar"></div>
+      <div class="menu-bar"></div>
+    </a>
+
+    <div class="post-body">
+      <div id="post-header" style="background-image: {{ background_image }};">
+        <div id="post-header-content">
+          {% autoescape false %}
+          {{ title }}
+          {% endautoescape %}
+        </div>
+      </div>
+
+      <div class="post-body-content">
+        <h3>By: Shareef Raheem {% if date %} | {{ date }} {% endif %}</h3>
+        {% autoescape false %}
+        {{post_content}}
+        {% endautoescape %}
+      </div>
+
+      <footer>
+        <div class='credits'>
+          <span style="color:#3c465f">Copyright &copy; 2014-2023</span>
+          <span style="color:#51608b">Shareef Raheem</span>
+        </div>
+      </footer>
+    </div>
+
+  </section>
+</body>
+
+</html>

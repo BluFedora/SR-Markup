@@ -2,6 +2,7 @@
   Title      = "- Project: Gemini - <br> (Game Project)", 
   CoverImage = "url(data/post-data/07/cover.png)",
   Date       = "December 5th, 2019",
+  Theme      = "project-gemini-theme",
 )
 
 @h3 { - Trailer - }
@@ -10,12 +11,12 @@
 
 @div(Class = "center-text") {
   @link(Src = "https://store.steampowered.com/app/1149630/Project_Gemini/") { 
-    Steam Download [https://store.steampowered.com/app/1149630/Project_Gemini/] 
+    Steam Download (https://store.steampowered.com/app/1149630/Project_Gemini/])
   }
 }
 
 @div(Class = "center-text") {
-  This game got showcased at <b>PAX West 2019</b> at the DigiPen booth.
+  This game got showcased at @b{PAX West 2019} at the DigiPen booth.
 }
 
 @h3 { Introduction }
@@ -24,62 +25,48 @@
   Project: Gemini is a two player co-op platformer where you Jump, Dash, Shoot and Smash through enemy drones.
   You play as either Guttierez (Gutz) or Cricket in an attempt to stop the evil corporation from taking over the city.
   In this cyberpunk-esque level you will encounter turrets, barbed wire, and other road blocks, but don't worry we have checkpoints!
-  Me and a team of 11 other people made this game in our Sophomore year at <b>DigiPen</b> over the course of a year.
+  Me and a team of 11 other people made this game in our Sophomore year at @b{DigiPen} over the course of a year.
 }
 
 @h3 { What I did for the Game }
 
 @Text(Size = "Full") {
-  I was the Tech Director for the 6 man tech team (w/ 2 designers and 4 artists) mostly designing the <b>Engine Architecture and Level Editor</b>.
-  <br><br>Engine Systems I Wrote:
+  I was the Tech Director for the 6 man tech team (w/ 2 designers and 4 artists) mostly designing the @b{Engine Architecture and Level Editor}.
 }
 
-@UList(Size = "Full") {
-  @li { @link(Src = "#demo-physics") { 2D Rigidbody Physics System using Impulse Based Collision Resolution } }
-  @li { @link(Src = "#demo-editor") { In-Game Level Editor using Dear ImGUI } }
-  @li { @link(Src = "#demo-prefabs") { Serialization and Prefabs } }
-  @li { @link(Src = "#demo-assets") { Asset Manager (Reference Counted Assets) } }
-  @li { @link(Src = "#demo-ai") { Base AI System Using Action Lists } }
-  @li { @link(Src = "#demo-spritesheet") { Spritesheet Animation w/ Spritesheet generator from a list of images } }
-  @li { @link(Src = "#demo-combat") { Health Manager (dubbed Combat System) } }
-  @li { @link(Src = "#demo-gamestate") { Gamestate Manager } }
-  @li { @link(Src = "#demo-memory") { Custom Memory Managers } }
-  @li { @link(Src = "#demo-") { Job System for "Easy" Multi-threading } }
-  @li { @link(Src = "#demo-ui") { In-Game GUI System w/ Bitmap Text (Had an ImGUI like API) } }
+@UList(Size = "Half") {
+  @li { @link(Src = "#demo-physics")   { 2D Rigidbody Physics System              }}
+  @li { @link(Src = "#demo-editor")    { In-Game Level Editor using Dear ImGUI    }}
+  @li { @link(Src = "#demo-job-sys")   { Job System for \"Easy\" Multi-threading  }}
+  @li { @link(Src = "#demo-prefabs")   { Serialization and Prefabs                }}
+  @li { @link(Src = "#demo-prefabs")   { Asset Manager (Reference Counted Assets) }}
+  @li { @link(Src = "#demo-ai")        { Basic AI System Using Action Lists       }}
+}
+
+@UList(Size = "Half") {
+  @li { @link(Src = "#demo-spritesheet") { Spritesheet Animation w/ Spritesheet generator tool for artists } }
+  @li { @link(Src = "#demo-ui") { In-Game GUI System w/ Bitmap Text } }
   @li { @link(Src = "#demo-RTTI") { Basic RTTI System for easier serialization } }
-  @li { @link(Src = "#demo-events") { Event Manager for Core Engine Subsystems } }
   @li { @link(Src = "#demo-ecs") { Entity Component System (ECS) Framework } }
   @li { @link(Src = "#demo-debug-logger") { Debug Logger with Logging Levels } }
   @li { @link(Src = "#demo-") { In-Editor live profiler } }
-  @li { @link(Src = "#demo-drawer") { Debug Drawer } }
-  @li { @link(Src = "#demo-data-structures") { Custom Data-Structures (Variant, SparseArray, Cache Friendly HashTable) } }
-  @li { @link(Src = "#demo-parallax-backgrounds") { Parallax Backgrounds } }
-}
-
-Gameplay Tasks:
-
-
-@UList(Size = "Full") {
-  @li { Arena System }
-  @li { Destructible Walls / Platforms }
-  @li { Switches that Trigger an Event }
-  @li { Checkpoint System }
-  @li { Basic Drone Enemy AI }
-  @li { Win, Lose, and Start Screen(s) Implementation and VFX + UI }
 }
 
 @h3 { Demos }
 
-@h3 { 2D Rigidbody Physics System }
-
-@video(Size = "Half", Src = "data/post-data/07/demo_physics.mp4")
+@h3(ID = "demo-physics") { 2D Rigidbody Physics System }
 
 @Text(Size = "Half") {
   This is the physics engine in action showing support for circles and arbitrary convex polygons.
+  The collision detection starts with a broad-phase only checking the AABB of the physics object then if
+  that check passes the separating axis theorem is used for accurately seeing if two objects collide.
+  Once the collision is detected an impulse is applied to each object with enough magnitude to make it
+  so the objects do not penetrate anymore.
 }
 
+@video(Size = "Half", Src = "data/post-data/07/demo_physics.mp4")
 
-@h3 { In-Game Level Editor }
+@h3(ID = "demo-editor") { In-Game Level Editor }
 
 @image(Size = "Half", Src = "data/post-data/07/demo_editor_00.PNG")
 
@@ -89,13 +76,63 @@ Gameplay Tasks:
   To open the editor all you have to do is press the tilde key ('~') and it will run the editor on top of the game.
 }
 
-@h3 { Serialization and Prefabs }
-
-@video(Size = "Half", Src = "data/post-data/07/demo_prefabs.mp4")
+@h3(ID = "demo-prefabs") { Serialization and Prefabs }
 
 @Text(Size = "Half") {
   This is a demo of the prefab system, you can make object types in the editor and later use that template for easier level creation.
   If you edit the prefab then the changes will propagate to all instances of the prefab.
 }
 
-@Text(Size = "Full") { ...To Be Continued... }
+@video(Size = "Half", Src = "data/post-data/07/demo_prefabs.mp4")
+
+@h3(ID = "demo-job-sys") { Job System (Multi-threading) }
+
+@Text(Size = "Full") { 
+  This job system was used to optimize the asset loading and frame animation update systems
+  within the engine. A cleaned up open source version of the system is available
+  @link(Src="https://github.com/BluFedora/BF-Job-System") { here }.
+
+  Each thread has a queue of task which other threads may steal from to allow for a very 
+  primitive form of work balancing.
+}
+
+@h3(ID = "demo-ai") { AI Framework }
+
+@Image(Size = "Half", Src = "data/post-data/07/ai-pathing.gif")
+
+@div(Size = "Half") {
+  @Text {
+    The AI framework was based off of the Action List data structure where at startup you push onto lists
+    the various actions you would like the AI to take and then those lists will be evaluated each frame.
+
+    Each Agent could have multiple lists either executing concurrently or one at a time depending on the 
+    configuration and needs of each particular enemy.
+
+    Transfering data across the lists used a Blackboard which we called `AIActionMessageBoard`, 
+    which was basically just a mapping from a string to C++17's `std::any`. 
+  }
+  @pre(Class = "prettyprint lang-cpp") {
+ // This is a sample of the API to setup AI.\n
+auto& movement_list \= actions\(\).addList\(\"Movement\"\);\n
+movement_list.pushBack<action::PatrolWayPoints>\(m_WayPointData\);\n
+movement_list.pushBack<action::ActionEvent>\(m_JumpToShootPattern\);\n
+}
+}
+
+@h3(ID = "demo-ui") { UI and Animation Systems }
+
+@Text {
+  I wrote a UI system for the game with an accompanying animation system for a polished look and feel when
+  iteracting with menus. The animations work through the use of a virtual timeline that allows for
+  animating any value made up of floats such as Vector2f(s) for positioning and sizing.
+
+  Text is from a bitmap atlas created offline along with a file describing some kerning information. These files
+  at runtime are loaded and parsed to be used by the text renderer. Text is just a bunch of quads with the correct UV 
+  corresponding to the character that you want drawn.
+
+  The UI supports Mouse, Keyboard, and Joystick controls and will switch automatically depending on which
+  device was last used.
+}
+
+@Image(Size = "Half", Src = "data/post-data/07/ui_intro_anim.gif")
+@Image(Size = "Half", Src = "data/post-data/07/ui_pause_anim.gif")

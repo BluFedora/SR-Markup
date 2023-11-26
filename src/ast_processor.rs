@@ -12,6 +12,7 @@ use crate::ast::ASTNodeText;
 #[derive(PartialEq)]
 pub enum ASTProcessorVisitResult {
     Continue,
+    SkipChildren,
     Halt,
 }
 
@@ -37,8 +38,9 @@ pub fn visit_ast(node: &ASTNode, processor: &mut dyn IASTProcessor) -> ASTProces
                         break;
                     }
                 }
+
+                processor.visit_end_root(r);
             }
-            processor.visit_end_root(r);
         }
         ASTNode::Tag(t) => {
             if processor.visit_begin_tag(t) == ASTProcessorVisitResult::Continue {
@@ -49,8 +51,9 @@ pub fn visit_ast(node: &ASTNode, processor: &mut dyn IASTProcessor) -> ASTProces
                         break;
                     }
                 }
+                
+                processor.visit_end_tag(t);
             }
-            processor.visit_end_tag(t);
         }
         ASTNode::Text(t) => {
             continue_processing = processor.visit_text(t);
