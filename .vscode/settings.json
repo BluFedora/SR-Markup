@@ -1,12 +1,13 @@
 {
   "cSpell.words": [
-    "IAST",
     "attribs",
     "cbindgen",
+    "IAST",
     "libc",
     "libloading",
     "repr",
     "rustup",
+    "srmarkup",
     "structopt"
   ]
 }

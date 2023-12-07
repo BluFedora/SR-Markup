@@ -15,7 +15,7 @@ use crate::lexer::LexerMode;
 use crate::lexer::Token;
 use crate::lexer::TokenTag;
 use crate::lexer::TokenText;
-use crate::Lexer;
+use crate::lexer::Lexer;
 
 use std::mem::swap;
 
@@ -38,9 +38,9 @@ pub struct Parser {
 }
 
 impl Parser {
-    pub fn new(lex: Lexer) -> Self {
+    pub fn new(source: String) -> Self {
         Parser {
-            lexer: lex,
+            lexer: Lexer::new(source),
             current_token: Token::EndOfFile(),
             error_log: Vec::new(),
         }

@@ -55,8 +55,7 @@ fn main() {
 
             match source_size {
                 Ok(_) => {
-                    let lexer = srmarkup::Lexer::new(source);
-                    let mut parser = srmarkup::Parser::new(lexer);
+                    let mut parser = srmarkup::Parser::new(source);
                     let parse_result: srmarkup::ParseResult = parser.parse();
 
                     match parse_result {

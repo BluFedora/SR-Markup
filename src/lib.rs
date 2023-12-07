@@ -17,7 +17,6 @@ pub use ast::ASTNodeTag;
 pub use ast::ASTNodeText;
 
 pub mod lexer;
-pub use lexer::Lexer;
 
 pub mod parser;
 pub use parser::ParseResult;

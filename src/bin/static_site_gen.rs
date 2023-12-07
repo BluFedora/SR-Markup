@@ -892,11 +892,10 @@ fn load_entire_file(file_name: &str) -> String {
 }
 
 fn main() {
-    let options = Options::from_args();
+    let options: Options = Options::from_args();
     let input_path = &options.input;
     let input_source = load_entire_file(input_path);
-    let lexer = srmarkup::Lexer::new(input_source);
-    let mut parser = srmarkup::Parser::new(lexer);
+    let mut parser = srmarkup::Parser::new(input_source);
     let parse_result: srmarkup::ParseResult = parser.parse();
 
     match parse_result {
