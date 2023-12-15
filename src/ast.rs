@@ -23,8 +23,7 @@ pub enum ASTNodeLiteral {
 }
 
 impl ToString for ASTNodeLiteral {
-    fn to_string(&self) -> String
-    {
+    fn to_string(&self) -> String {
         match self {
             ASTNodeLiteral::Str(value) => value.clone(),
             ASTNodeLiteral::Float(value) => value.to_string(),
@@ -41,8 +40,7 @@ pub struct ASTNodeTag {
 }
 
 impl ASTNodeTag {
-    pub fn find_attribute(self: &Self, key:&str) -> Option<&ASTNodeLiteral> 
-    {
+    pub fn find_attribute(self: &Self, key: &str) -> Option<&ASTNodeLiteral> {
         return self.attributes.get(key);
     }
 }

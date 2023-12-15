@@ -3,9 +3,9 @@
 //
 
 pub mod ast_processor;
-pub use ast_processor::IASTProcessor;
-pub use ast_processor::ASTProcessorVisitResult;
 pub use ast_processor::visit_ast;
+pub use ast_processor::ASTProcessorVisitResult;
+pub use ast_processor::IASTProcessor;
 
 pub mod ast;
 pub use ast::ASTNode;

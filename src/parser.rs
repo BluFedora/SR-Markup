@@ -11,13 +11,11 @@ use crate::ast::ASTNodeRoot;
 use crate::ast::ASTNodeTag;
 use crate::ast::ASTNodeText;
 
+use crate::lexer::Lexer;
 use crate::lexer::LexerMode;
 use crate::lexer::Token;
 use crate::lexer::TokenTag;
 use crate::lexer::TokenText;
-use crate::lexer::Lexer;
-
-use std::mem::swap;
 
 pub struct ParseError {
     pub message: String,
@@ -30,7 +28,7 @@ pub struct ParseErrors {
 
 pub type ParseResult = Result<ASTNodePtr, ParseErrors>;
 
-/// Parses an sr-mark source text provided by the passed in lexer.
+/// Parses an sr-mark source text.
 pub struct Parser {
     lexer: Lexer,
     current_token: Token,
@@ -57,11 +55,9 @@ impl Parser {
         return if self.error_log.is_empty() {
             Ok(Box::new(ASTNode::Root(root_node)))
         } else {
-            let mut errors = ParseErrors { errors: Vec::new() };
-
-            swap(&mut errors.errors, &mut self.error_log);
-
-            Err(errors)
+            Err(ParseErrors {
+                errors: std::mem::take(&mut self.error_log),
+            })
         };
     }
 
@@ -146,7 +142,7 @@ impl Parser {
                 let variable_name = self.current_token.clone();
 
                 self.require(
-                    &make_empty_token_text(),
+                    &Self::make_empty_token_text(),
                     &format!("Variable must be a string name but got {}", variable_name),
                 );
 
@@ -176,7 +172,7 @@ impl Parser {
                 }
 
                 //
-                // NOTE(Shareef):
+                // NOTE(SR):
                 //   Commas are optional, since all literals
                 //   have a defined token there is no ambiguity.
                 //
@@ -185,9 +181,7 @@ impl Parser {
         }
         self.lexer.pop_mode();
 
-        // NOTE(Shareef):
-        //   Tag Body is optional
-        // if self.require(&Token::Character('{')) {
+        // NOTE(SR): Tag Body is optional
         if self.expect(&Token::Character('{')) {
             while !self.expect(&Token::Character('}')) {
                 self.parse_impl(&mut tag_node.children);
@@ -222,6 +216,7 @@ impl Parser {
             "Expected {} but got {}, {}",
             *token, self.current_token, err_message
         ));
+
         // Prevent infinite loops by just returning true when at the end of a file.
         return self.current_token == Token::EndOfFile();
     }
@@ -236,27 +231,25 @@ impl Parser {
         return self.current_token == Token::EndOfFile();
     }
 
-    fn advance_token(&mut self) -> &Token {
+    fn advance_token(&mut self) {
         self.current_token = self.lexer.get_next_token();
-        &self.current_token
     }
 
     fn error_panic(&mut self, message: String) {
-        // Advance the token as not to get stuck in infinite loops and
-        // better error messages.
+        // Advance the token as not to get stuck in infinite loops and better error messages.
         self.advance_token();
         self.error_log.push(ParseError {
             message: message,
             line_number: self.lexer.line_no,
         });
     }
-}
 
-fn make_empty_token_text() -> Token {
-    return Token::Text(TokenText {
-        line_no_start: 0,
-        line_no_end_with_content: 0,
-        line_no_end: 0,
-        text: "".to_string(),
-    });
+    fn make_empty_token_text() -> Token {
+        return Token::Text(TokenText {
+            line_no_start: 0,
+            line_no_end_with_content: 0,
+            line_no_end: 0,
+            text: String::default(),
+        });
+    }
 }

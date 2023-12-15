@@ -51,7 +51,7 @@ pub fn visit_ast(node: &ASTNode, processor: &mut dyn IASTProcessor) -> ASTProces
                         break;
                     }
                 }
-                
+
                 processor.visit_end_tag(t);
             }
         }
