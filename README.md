@@ -21,34 +21,7 @@ If you want some more information on the various flags just do `sr-markup-ast-du
 
 ## Syntax Example
 
-```swift
-@Header(
-  Title      = "Blog Post Title", 
-  CoverImage = "url(data/post-data/07/cover.png)",
-  Date       = "December 5th, 2019",
-)
-
-@h3 { - Header Text - }
-
-@video(Size = "Full", Src = "data/post-data/07/trailer.mp4")
-
-@Text(Size = "Full") {
-  This is some dummy text!
-
-  @"A Fun Tag With Spaces In The Name"()
-}
-
-@p (FontSize = "20px") 
-{
-  This is a tag with an attribute name "FontSize".
-
-  @MyNestedTag {
-    Helloooo
-  }
-}
-
-This is some top level text.
-```
+![Example syntax](images/syntax_example.png)
 
 **IMPORTANT: These characters must be escaped (e.g \\@) within text blocks: '@', '{', '}', and '='.**
 
@@ -103,7 +76,7 @@ Boolean = true / false
 ```
 MIT License
 
-Copyright (c) 2020-2023 Shareef Abdoul-Raheem
+Copyright (c) 2020-2024 Shareef Abdoul-Raheem
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
