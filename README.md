@@ -69,7 +69,12 @@ String  = "Strings are In Double Quotes"
 Number  = 1.5
 Boolean = true / false
 ```
-**IMPORTANT only integer values in the range [-2^53, 2^53] can be properly represented.**
+**IMPORTANT: only integer values in the range [-2^53, 2^53] can be properly represented.**
+
+## VSCode Extension 
+
+To get syntax highlighting for `srmark` in VSCode install the extension located
+in the [srmark-lang](srmark-lang) folder.
 
 ## License
 
